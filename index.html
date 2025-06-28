@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sacks Spiral Clusters with Free Movement</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    canvas { display: block; }
+    body   { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body class="bg-black">
+  <canvas id="spiralCanvas" class="w-full h-full"></canvas>
+  <script>
+    const canvas = document.getElementById('spiralCanvas')
+    const ctx    = canvas.getContext('2d')
+
+    // spiral settings
+    let scale = 4
+    const maxN = 190000
+    let points = []
+
+    // cluster settings
+    const clusterCount  = 150
+    const clusterRadius = 100
+    const sizeBoost     = 1
+    const liftHeight    = 20
+    const trailAlpha    = 0.25
+
+    const clusters = []
+
+    function resize() {
+      canvas.width  = innerWidth
+      canvas.height = innerHeight
+      computePoints()
+      initClusters()
+    }
+
+    function computePoints() {
+      const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2
+      points = []
+      for (let n = 1; n <= maxN; n++) {
+        const r = Math.sqrt(n) * scale
+        const θ = 100 * Math.PI * Math.sqrt(n)
+        const x = cx + r * Math.cos(θ)
+        const y = cy + r * Math.sin(θ)
+        if (x<0||x>W||y<0||y>H) continue
+        points.push({x,y})
+      }
+    }
+
+    function initClusters() {
+      clusters.length = 0
+      const W = canvas.width, H = canvas.height
+      for (let i = 0; i < clusterCount; i++) {
+        const x = Math.random()*W
+        const y = Math.random()*H
+        clusters.push({
+          x, y,
+          targetX: Math.random()*W,
+          targetY: Math.random()*H,
+          speed: 2 + Math.random()*1.0  // px per frame
+        })
+      }
+    }
+
+    function updateClusters() {
+      const W = canvas.width, H = canvas.height
+      clusters.forEach(c => {
+        const dx = c.targetX - c.x
+        const dy = c.targetY - c.y
+        const d  = Math.hypot(dx, dy)
+        if (d < c.speed) {
+          // reached target → pick a new one
+          c.targetX = Math.random() * W
+          c.targetY = Math.random() * H
+        } else {
+          // move toward target
+          c.x += (dx / d) * c.speed
+          c.y += (dy / d) * c.speed
+        }
+      })
+    }
+
+    function drawFrame() {
+      updateClusters()
+
+      // fading trail
+      ctx.fillStyle = `rgba(0,0,0,${trailAlpha})`
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      ctx.fillStyle = 'white'
+      for (const p of points) {
+        let factor = 0
+        for (const c of clusters) {
+          const dx = p.x - c.x, dy = p.y - c.y
+          if (Math.abs(dx) < clusterRadius && Math.abs(dy) < clusterRadius) {
+            const fx = 1 - Math.abs(dx) / clusterRadius
+            const fy = 1 - Math.abs(dy) / clusterRadius
+            const squareFalloff = Math.min(fx, fy)
+            factor = Math.max(factor, squareFalloff)
+          }
+        }
+        const size    = 2 + factor * sizeBoost
+        const offsetY = -factor * liftHeight
+
+        ctx.beginPath()
+        ctx.arc(p.x, p.y + offsetY, size/2, 0, 2*Math.PI)
+        ctx.fill()
+      }
+
+      requestAnimationFrame(drawFrame)
+    }
+
+    function randomizeRGB() {
+      return '0,0,0'
+        .split(',')
+        .map(() => Math.floor(Math.random() * 256))
+        .join(',');
+    }
+
+    // scroll-to-zoom
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
+    window.addEventListener('wheel', e => {
+      e.preventDefault()
+      scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
+      computePoints()
+    }, { passive: false })
+
+    window.addEventListener('resize', resize)
+    resize()
+    requestAnimationFrame(drawFrame)
+  </script>
+</body>
+</html>
