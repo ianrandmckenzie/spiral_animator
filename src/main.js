@@ -469,13 +469,7 @@ function drawFrame() {
     renderBatchSize = points.length; // Render all points instantly when enabled
   } else {
     // Progressive rendering for the nice animation effect
-    if (points.length <= 10000) {
-      renderBatchSize = points.length; // Render all points for smaller datasets
-    } else if (points.length <= 50000) {
-      renderBatchSize = Math.min(points.length, 2000); // Medium batch size
-    } else {
-      renderBatchSize = Math.min(points.length, 5000); // Larger batch size for big datasets
-    }
+    renderBatchSize = points.length;
   }
 
   let currentColor = '';
@@ -566,7 +560,7 @@ window.addEventListener('wheel', e => {
   e.preventDefault()
   scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
   debouncedSaveScale(scale)
-  
+
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
     computePoints()
@@ -686,7 +680,7 @@ spiralSlider.addEventListener('input', (e) => {
   spiralCoeff = parseFloat(e.target.value)
   spiralNumber.value = spiralCoeff
   savePreference('spiralCoeff', spiralCoeff)
-  
+
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
     computePoints()
@@ -704,7 +698,7 @@ spiralNumber.addEventListener('input', (e) => {
       spiralSlider.value = spiralCoeff
     }
     savePreference('spiralCoeff', spiralCoeff)
-    
+
     // Use instant computation if instant render is enabled, otherwise debounce
     if (instantRender) {
       computePoints()
@@ -722,7 +716,7 @@ maxNSlider.addEventListener('input', (e) => {
   maxN = parseInt(e.target.value)
   maxNNumber.value = maxN
   savePreference('maxN', maxN)
-  
+
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
     computePoints()
@@ -744,7 +738,7 @@ maxNNumber.addEventListener('input', (e) => {
       console.warn(`Warning: Using ${value} points may impact performance`)
     }
     savePreference('maxN', maxN)
-    
+
     // Use instant computation if instant render is enabled, otherwise debounce
     if (instantRender) {
       computePoints()
