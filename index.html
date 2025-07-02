@@ -570,6 +570,14 @@
           document.getElementById('primeSizeNumber').value = primeSize;
         }
       };
+
+      // Load scale
+      objectStore.get('scale').onsuccess = (event) => {
+        if (event.target.result) {
+          scale = event.target.result.value;
+          computePoints();
+        }
+      };
     }
 
     // Prime number checking function
@@ -741,6 +749,7 @@
     window.addEventListener('wheel', e => {
       e.preventDefault()
       scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
+      savePreference('scale', scale)
       computePoints()
     }, { passive: false })
 
