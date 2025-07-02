@@ -202,7 +202,7 @@ function loadPreferences() {
       const primeToggle = document.getElementById('primeToggle');
       primeToggle.classList.toggle('active', showPrimes);
       primeToggle.setAttribute('aria-checked', showPrimes.toString());
-      primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers';
+      primeToggle.textContent = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers';
     }
   };
 
@@ -615,7 +615,7 @@ primeToggle.addEventListener('click', () => {
   showPrimes = !showPrimes
   primeToggle.classList.toggle('active', showPrimes)
   primeToggle.setAttribute('aria-checked', showPrimes.toString())
-  primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers'
+  primeToggle.textContent = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers'
   savePreference('showPrimes', showPrimes)
 })
 
