@@ -3,17 +3,17 @@ const ctx    = canvas.getContext('2d')
 
 // spiral settings
 let scale = 3
-let maxN = 20000
-let spiralCoeff = 100
+let maxN = 10000
+let spiralCoeff = 2
 let points = []
 let showPrimes = true
-let showClusters = false
-let showRotation = false
-let rotationSpeed = 1.0
+let showClusters = true
+let showRotation = true
+let rotationSpeed = 0.1
 let currentRotation = 0
-let useSquares = false
-let dotSize = 2.0
-let primeSize = 2.0
+let useSquares = true
+let dotSize = 0.1
+let primeSize = 10.0
 let isFullscreen = false
 let instantRender = false
 
@@ -469,7 +469,13 @@ function drawFrame() {
     renderBatchSize = points.length; // Render all points instantly when enabled
   } else {
     // Progressive rendering for the nice animation effect
-    renderBatchSize = points.length;
+    if (points.length <= 10000) {
+      renderBatchSize = points.length; // Render all points for smaller datasets
+    } else if (points.length <= 50000) {
+      renderBatchSize = Math.min(points.length, 2000); // Medium batch size
+    } else {
+      renderBatchSize = Math.min(points.length, 5000); // Larger batch size for big datasets
+    }
   }
 
   let currentColor = '';
