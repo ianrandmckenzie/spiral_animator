@@ -36,7 +36,7 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/assets/index-Drpglqzg.js"></script>
+  <script type="module" crossorigin src="/assets/index-Co6BGc6y.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-Bmf2lI8O.css">
 </head>
 <body class="bg-black text-[#00ff00]">
@@ -55,19 +55,19 @@
         Default Prime Numbers
       </button>
 
-      <button id="clusterToggle" class="toggle-button cluster-toggle"
+      <button id="clusterToggle" class="toggle-button cluster-toggle active"
               role="switch" aria-checked="false"
               aria-label="Toggle cluster animation">
         Start Animation
       </button>
 
-      <button id="rotationToggle" class="toggle-button rotation-toggle"
+      <button id="rotationToggle" class="toggle-button rotation-toggle active"
               role="switch" aria-checked="false"
               aria-label="Toggle spiral rotation">
         Start Rotation
       </button>
 
-      <button id="shapeToggle" class="toggle-button shape-toggle"
+      <button id="shapeToggle" class="toggle-button shape-toggle active"
               role="switch" aria-checked="false"
               aria-label="Toggle between circles and squares">
         Use Squares
@@ -82,17 +82,17 @@
       <div class="spiral-control">
         <div class="control-group">
           <label for="spiralSlider">Spiral Coefficient</label>
-          <input type="range" id="spiralSlider" min="2" max="200" value="100" step="0.1"
+          <input type="range" id="spiralSlider" min="2" max="200" value="2" step="0.1"
                  aria-describedby="spiralNumber">
-          <input type="number" id="spiralNumber" min="0" max="2000" value="100" step="0.1"
+          <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
                  aria-label="Spiral coefficient numeric input">
         </div>
 
         <div class="control-group">
           <label for="maxNSlider">Max N (Point Count)</label>
-          <input type="range" id="maxNSlider" min="20000" max="190000" value="20000" step="1000"
+          <input type="range" id="maxNSlider" min="20000" max="190000" value="5000" step="1000"
                  aria-describedby="maxNNumber">
-          <input type="number" id="maxNNumber" min="0" max="1900000" value="20000" step="1000"
+          <input type="number" id="maxNNumber" min="0" max="1900000" value="5000" step="1000"
                  aria-label="Maximum point count numeric input">
         </div>
 
@@ -106,25 +106,25 @@
 
         <div class="control-group">
           <label for="rotationSpeedSlider">Rotation Speed</label>
-          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="1.0" step="0.1"
+          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="0.1" step="0.1"
                  aria-describedby="rotationSpeedNumber">
-          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="1.0" step="0.1"
+          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="0.1" step="0.1"
                  aria-label="Rotation speed numeric input">
         </div>
 
         <div class="control-group">
           <label for="dotSizeSlider">Dot/Square Size</label>
-          <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="2.0" step="0.1"
+          <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="0.1" step="0.1"
                  aria-describedby="dotSizeNumber">
-          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="2.0" step="0.1"
+          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="0.1" step="0.1"
                  aria-label="Dot or square size numeric input">
         </div>
 
         <div class="control-group">
           <label for="primeSizeSlider">Prime Size Multiplier</label>
-          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="2.0" step="0.1"
+          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="10" step="0.1"
                  aria-describedby="primeSizeNumber">
-          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="2.0" step="0.1"
+          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="10" step="0.1"
                  aria-label="Prime number size multiplier numeric input">
         </div>
       </div>

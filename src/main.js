@@ -2,8 +2,8 @@ const canvas = document.getElementById('spiralCanvas')
 const ctx    = canvas.getContext('2d')
 
 // spiral settings
-let scale = 3
-let maxN = 10000
+let scale = 5
+let maxN = 5000
 let spiralCoeff = 2
 let points = []
 let showPrimes = true
