@@ -15,6 +15,7 @@ let useSquares = false
 let dotSize = 2.0
 let primeSize = 2.0
 let isFullscreen = false
+let instantRender = false
 
 // cluster settings
 let clusterCount = 100
@@ -150,13 +151,17 @@ function loadPreferences() {
       if (event.target.result.value) {
         sidebar.classList.add('collapsed');
         toggle.textContent = '☰';
+        toggle.setAttribute('aria-expanded', 'false');
       } else {
         // Sidebar is open, so show close icon
         toggle.textContent = '✕';
+        toggle.setAttribute('aria-expanded', 'true');
       }
     } else {
       // No saved state, sidebar is open by default, show close icon
-      document.getElementById('sidebarToggle').textContent = '✕';
+      const toggle = document.getElementById('sidebarToggle');
+      toggle.textContent = '✕';
+      toggle.setAttribute('aria-expanded', 'true');
     }
   };
 
@@ -196,6 +201,7 @@ function loadPreferences() {
       showPrimes = event.target.result.value;
       const primeToggle = document.getElementById('primeToggle');
       primeToggle.classList.toggle('active', showPrimes);
+      primeToggle.setAttribute('aria-checked', showPrimes.toString());
       primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers';
     }
   };
@@ -206,6 +212,7 @@ function loadPreferences() {
       showClusters = event.target.result.value;
       const clusterToggle = document.getElementById('clusterToggle');
       clusterToggle.classList.toggle('active', showClusters);
+      clusterToggle.setAttribute('aria-checked', showClusters.toString());
       clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation';
     }
   };
@@ -216,6 +223,7 @@ function loadPreferences() {
       showRotation = event.target.result.value;
       const rotationToggle = document.getElementById('rotationToggle');
       rotationToggle.classList.toggle('active', showRotation);
+      rotationToggle.setAttribute('aria-checked', showRotation.toString());
       rotationToggle.textContent = showRotation ? 'Stop Rotation' : 'Start Rotation';
     }
   };
@@ -235,7 +243,19 @@ function loadPreferences() {
       useSquares = event.target.result.value;
       const shapeToggle = document.getElementById('shapeToggle');
       shapeToggle.classList.toggle('active', useSquares);
+      shapeToggle.setAttribute('aria-checked', useSquares.toString());
       shapeToggle.textContent = useSquares ? 'Use Circles' : 'Use Squares';
+    }
+  };
+
+  // Load instant render preference
+  objectStore.get('instantRender').onsuccess = (event) => {
+    if (event.target.result !== undefined) {
+      instantRender = event.target.result.value;
+      const instantRenderToggle = document.getElementById('instantRenderToggle');
+      instantRenderToggle.classList.toggle('active', instantRender);
+      instantRenderToggle.setAttribute('aria-checked', instantRender.toString());
+      instantRenderToggle.textContent = instantRender ? 'Disable Instant Render' : 'Enable Instant Render';
     }
   };
 
@@ -266,15 +286,33 @@ function loadPreferences() {
   };
 }
 
-// Prime number checking function
+// Prime number checking function with memoization
+const primeCache = new Map();
 function isPrime(n) {
-  if (n < 2) return false
-  if (n === 2) return true
-  if (n % 2 === 0) return false
-  for (let i = 3; i * i <= n; i += 2) {
-    if (n % i === 0) return false
+  if (primeCache.has(n)) return primeCache.get(n);
+
+  if (n < 2) {
+    primeCache.set(n, false);
+    return false;
   }
-  return true
+  if (n === 2) {
+    primeCache.set(n, true);
+    return true;
+  }
+  if (n % 2 === 0) {
+    primeCache.set(n, false);
+    return false;
+  }
+
+  for (let i = 3; i * i <= n; i += 2) {
+    if (n % i === 0) {
+      primeCache.set(n, false);
+      return false;
+    }
+  }
+
+  primeCache.set(n, true);
+  return true;
 }
 
 function resize() {
@@ -288,6 +326,12 @@ function computePoints() {
   const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2
   points = []
 
+  // Cancel any ongoing computation
+  if (window.currentComputationId) {
+    cancelIdleCallback(window.currentComputationId)
+    window.currentComputationId = null
+  }
+
   // Performance safety: limit computation for very large values
   const effectiveMaxN = Math.min(maxN, 2000000) // Hard cap at 2M points
 
@@ -295,21 +339,61 @@ function computePoints() {
   const diagonal = Math.sqrt(W * W + H * H)
   const margin = diagonal / 2
 
-  for (let n = 1; n <= effectiveMaxN; n++) {
-    const r = Math.sqrt(n) * scale
-    const θ = spiralCoeff * Math.PI * Math.sqrt(n)
-    const x = cx + r * Math.cos(θ)
-    const y = cy + r * Math.sin(θ)
+  if (instantRender) {
+    // Instant computation - compute all points immediately without chunking
+    for (let n = 1; n <= effectiveMaxN; n++) {
+      const r = Math.sqrt(n) * scale
+      const θ = spiralCoeff * Math.PI * Math.sqrt(n)
+      const x = cx + r * Math.cos(θ)
+      const y = cy + r * Math.sin(θ)
 
-    // Use expanded bounds when rotation is enabled to prevent clipping
-    const bounds = showRotation ? margin : 0
-    if (x < -bounds || x > W + bounds || y < -bounds || y > H + bounds) continue
+      // Use expanded bounds when rotation is enabled to prevent clipping
+      const bounds = showRotation ? margin : 0
+      if (x < -bounds || x > W + bounds || y < -bounds || y > H + bounds) continue
 
-    points.push({x, y, n, isPrime: isPrime(n)})
-  }
+      points.push({x, y, n, isPrime: isPrime(n)})
+    }
 
-  if (maxN > effectiveMaxN) {
-    console.warn(`Capped point calculation at ${effectiveMaxN} for performance`)
+    if (maxN > effectiveMaxN) {
+      console.warn(`Capped point calculation at ${effectiveMaxN} for performance`)
+    }
+  } else {
+    // Progressive computation with chunking for animation effect
+    const chunkSize = 1000;
+    let currentN = 1;
+
+    function computeChunk() {
+      const endN = Math.min(currentN + chunkSize, effectiveMaxN);
+
+      for (let n = currentN; n <= endN; n++) {
+        const r = Math.sqrt(n) * scale
+        const θ = spiralCoeff * Math.PI * Math.sqrt(n)
+        const x = cx + r * Math.cos(θ)
+        const y = cy + r * Math.sin(θ)
+
+        // Use expanded bounds when rotation is enabled to prevent clipping
+        const bounds = showRotation ? margin : 0
+        if (x < -bounds || x > W + bounds || y < -bounds || y > H + bounds) continue
+
+        points.push({x, y, n, isPrime: isPrime(n)})
+      }
+
+      currentN = endN + 1;
+
+      if (currentN <= effectiveMaxN) {
+        // Continue with next chunk on next frame
+        window.currentComputationId = requestIdleCallback(computeChunk, { timeout: 50 });
+      } else {
+        // Computation complete
+        window.currentComputationId = null
+        if (maxN > effectiveMaxN) {
+          console.warn(`Capped point calculation at ${effectiveMaxN} for performance`)
+        }
+      }
+    }
+
+    // Schedule the first chunk
+    window.currentComputationId = requestIdleCallback(computeChunk, { timeout: 50 });
   }
 }
 
@@ -378,43 +462,87 @@ function drawFrame() {
     ctx.translate(-canvas.width / 2, -canvas.height / 2)
   }
 
-  for (const p of points) {
-    let factor = 0
+  // Batch drawing operations for better performance
+  // Dynamic render batch size based on instant render setting and performance needs
+  let renderBatchSize;
+  if (instantRender) {
+    renderBatchSize = points.length; // Render all points instantly when enabled
+  } else {
+    // Progressive rendering for the nice animation effect
+    if (points.length <= 10000) {
+      renderBatchSize = points.length; // Render all points for smaller datasets
+    } else if (points.length <= 50000) {
+      renderBatchSize = Math.min(points.length, 2000); // Medium batch size
+    } else {
+      renderBatchSize = Math.min(points.length, 5000); // Larger batch size for big datasets
+    }
+  }
+
+  let currentColor = '';
+
+  // Group points by color and shape to reduce state changes
+  const primePoints = [];
+  const normalPoints = [];
+
+  for (let i = 0; i < renderBatchSize; i++) {
+    const p = points[i % points.length];
+
+    let factor = 0;
     if (showClusters) {
       for (const c of clusters) {
-        const dx = p.x - c.x, dy = p.y - c.y
+        const dx = p.x - c.x, dy = p.y - c.y;
         if (Math.abs(dx) < clusterRadius && Math.abs(dy) < clusterRadius) {
-          const fx = 1 - Math.abs(dx) / clusterRadius
-          const fy = 1 - Math.abs(dy) / clusterRadius
-          const squareFalloff = Math.min(fx, fy)
-          factor = Math.max(factor, squareFalloff)
+          const fx = 1 - Math.abs(dx) / clusterRadius;
+          const fy = 1 - Math.abs(dy) / clusterRadius;
+          const squareFalloff = Math.min(fx, fy);
+          factor = Math.max(factor, squareFalloff);
         }
       }
     }
 
     // Calculate size based on base size, prime multiplier, and cluster effect
-    let baseSize = dotSize
+    let baseSize = dotSize;
     if (showPrimes && p.isPrime) {
-      baseSize *= primeSize
+      baseSize *= primeSize;
     }
-    const size = baseSize + factor * sizeBoost
-    const offsetY = -factor * liftHeight
+    const size = baseSize + factor * sizeBoost;
+    const offsetY = -factor * liftHeight;
 
-    // Set color based on prime status and toggle state
+    const pointData = { ...p, size, offsetY };
+
     if (showPrimes && p.isPrime) {
-      ctx.fillStyle = '#00ff00' // Green for primes
+      primePoints.push(pointData);
     } else {
-      ctx.fillStyle = '#009900' // Darker green for non-primes or when toggle is off
+      normalPoints.push(pointData);
     }
+  }
 
-    // Draw either circle or square based on toggle
-    if (useSquares) {
-      ctx.fillRect(p.x - size/2, p.y + offsetY - size/2, size, size)
-    } else {
-      ctx.beginPath()
-      ctx.arc(p.x, p.y + offsetY, size/2, 0, 2*Math.PI)
-      ctx.fill()
-    }
+  // Draw normal points in batch
+  if (normalPoints.length > 0) {
+    ctx.fillStyle = '#009900';
+    normalPoints.forEach(p => {
+      if (useSquares) {
+        ctx.fillRect(p.x - p.size/2, p.y + p.offsetY - p.size/2, p.size, p.size);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y + p.offsetY, p.size/2, 0, 2*Math.PI);
+        ctx.fill();
+      }
+    });
+  }
+
+  // Draw prime points in batch
+  if (primePoints.length > 0) {
+    ctx.fillStyle = '#00ff00';
+    primePoints.forEach(p => {
+      if (useSquares) {
+        ctx.fillRect(p.x - p.size/2, p.y + p.offsetY - p.size/2, p.size, p.size);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y + p.offsetY, p.size/2, 0, 2*Math.PI);
+        ctx.fill();
+      }
+    });
   }
 
   // Restore canvas state
@@ -430,13 +558,21 @@ function randomizeRGB() {
     .join(',');
 }
 
-// scroll-to-zoom
+// scroll-to-zoom with debouncing
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
+const debouncedSaveScale = debounce((scale) => savePreference('scale', scale), 200);
+
 window.addEventListener('wheel', e => {
   e.preventDefault()
   scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
-  savePreference('scale', scale)
-  computePoints()
+  debouncedSaveScale(scale)
+  
+  // Use instant computation if instant render is enabled, otherwise debounce
+  if (instantRender) {
+    computePoints()
+  } else {
+    debouncedComputePoints()
+  }
 }, { passive: false })
 
 // Prevent canvas zoom when scrolling over sidebar
@@ -469,6 +605,7 @@ const sidebarToggle = document.getElementById('sidebarToggle')
 sidebarToggle.addEventListener('click', () => {
   const isCollapsed = sidebar.classList.toggle('collapsed')
   sidebarToggle.textContent = isCollapsed ? '☰' : '✕'
+  sidebarToggle.setAttribute('aria-expanded', (!isCollapsed).toString())
   savePreference('sidebarCollapsed', isCollapsed)
 })
 
@@ -477,6 +614,7 @@ const primeToggle = document.getElementById('primeToggle')
 primeToggle.addEventListener('click', () => {
   showPrimes = !showPrimes
   primeToggle.classList.toggle('active', showPrimes)
+  primeToggle.setAttribute('aria-checked', showPrimes.toString())
   primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers'
   savePreference('showPrimes', showPrimes)
 })
@@ -486,6 +624,7 @@ const clusterToggle = document.getElementById('clusterToggle')
 clusterToggle.addEventListener('click', () => {
   showClusters = !showClusters
   clusterToggle.classList.toggle('active', showClusters)
+  clusterToggle.setAttribute('aria-checked', showClusters.toString())
   clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation'
   savePreference('showClusters', showClusters)
 })
@@ -495,6 +634,7 @@ const rotationToggle = document.getElementById('rotationToggle')
 rotationToggle.addEventListener('click', () => {
   showRotation = !showRotation
   rotationToggle.classList.toggle('active', showRotation)
+  rotationToggle.setAttribute('aria-checked', showRotation.toString())
   rotationToggle.textContent = showRotation ? 'Stop Rotation' : 'Start Rotation'
   savePreference('showRotation', showRotation)
   // Recompute points when rotation state changes to adjust clipping bounds
@@ -506,9 +646,37 @@ const shapeToggle = document.getElementById('shapeToggle')
 shapeToggle.addEventListener('click', () => {
   useSquares = !useSquares
   shapeToggle.classList.toggle('active', useSquares)
+  shapeToggle.setAttribute('aria-checked', useSquares.toString())
   shapeToggle.textContent = useSquares ? 'Use Circles' : 'Use Squares'
   savePreference('useSquares', useSquares)
 })
+
+// Instant render toggle functionality
+const instantRenderToggle = document.getElementById('instantRenderToggle')
+instantRenderToggle.addEventListener('click', () => {
+  instantRender = !instantRender
+  instantRenderToggle.classList.toggle('active', instantRender)
+  instantRenderToggle.setAttribute('aria-checked', instantRender.toString())
+  instantRenderToggle.textContent = instantRender ? 'Disable Instant Render' : 'Enable Instant Render'
+  savePreference('instantRender', instantRender)
+})
+
+// Debounce function to reduce excessive computations
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Debounced computation functions
+const debouncedComputePoints = debounce(computePoints, 100);
+const debouncedInitClusters = debounce(initClusters, 100);
 
 // Spiral coefficient slider functionality
 const spiralSlider = document.getElementById('spiralSlider')
@@ -518,7 +686,13 @@ spiralSlider.addEventListener('input', (e) => {
   spiralCoeff = parseFloat(e.target.value)
   spiralNumber.value = spiralCoeff
   savePreference('spiralCoeff', spiralCoeff)
-  computePoints()
+  
+  // Use instant computation if instant render is enabled, otherwise debounce
+  if (instantRender) {
+    computePoints()
+  } else {
+    debouncedComputePoints()
+  }
 })
 
 spiralNumber.addEventListener('input', (e) => {
@@ -530,7 +704,13 @@ spiralNumber.addEventListener('input', (e) => {
       spiralSlider.value = spiralCoeff
     }
     savePreference('spiralCoeff', spiralCoeff)
-    computePoints()
+    
+    // Use instant computation if instant render is enabled, otherwise debounce
+    if (instantRender) {
+      computePoints()
+    } else {
+      debouncedComputePoints()
+    }
   }
 })
 
@@ -542,7 +722,13 @@ maxNSlider.addEventListener('input', (e) => {
   maxN = parseInt(e.target.value)
   maxNNumber.value = maxN
   savePreference('maxN', maxN)
-  computePoints()
+  
+  // Use instant computation if instant render is enabled, otherwise debounce
+  if (instantRender) {
+    computePoints()
+  } else {
+    debouncedComputePoints()
+  }
 })
 
 maxNNumber.addEventListener('input', (e) => {
@@ -558,7 +744,13 @@ maxNNumber.addEventListener('input', (e) => {
       console.warn(`Warning: Using ${value} points may impact performance`)
     }
     savePreference('maxN', maxN)
-    computePoints()
+    
+    // Use instant computation if instant render is enabled, otherwise debounce
+    if (instantRender) {
+      computePoints()
+    } else {
+      debouncedComputePoints()
+    }
   }
 })
 
@@ -570,7 +762,7 @@ clusterCountSlider.addEventListener('input', (e) => {
   clusterCount = parseInt(e.target.value)
   clusterCountNumber.value = clusterCount
   savePreference('clusterCount', clusterCount)
-  initClusters()
+  debouncedInitClusters()
 })
 
 clusterCountNumber.addEventListener('input', (e) => {
@@ -586,7 +778,7 @@ clusterCountNumber.addEventListener('input', (e) => {
       console.warn(`Warning: Using ${value} clusters may impact performance`)
     }
     savePreference('clusterCount', clusterCount)
-    initClusters()
+    debouncedInitClusters()
   }
 })
 
@@ -653,6 +845,60 @@ primeSizeNumber.addEventListener('input', (e) => {
       primeSizeSlider.value = primeSize
     }
     savePreference('primeSize', primeSize)
+  }
+})
+
+// Keyboard navigation support for accessibility
+document.addEventListener('keydown', (e) => {
+  // ESC key to exit fullscreen or close sidebar
+  if (e.key === 'Escape') {
+    if (isFullscreen) {
+      exitFullscreen()
+    } else if (!sidebar.classList.contains('collapsed')) {
+      sidebarToggle.click()
+    }
+  }
+
+  // F11 or F key to toggle fullscreen
+  if (e.key === 'F11' || (e.key === 'f' && !e.ctrlKey && !e.metaKey)) {
+    e.preventDefault()
+    toggleFullscreen()
+  }
+
+  // S key to toggle sidebar
+  if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    sidebarToggle.click()
+  }
+
+  // P key to toggle primes
+  if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    primeToggle.click()
+  }
+
+  // A key to toggle animation
+  if (e.key === 'a' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    clusterToggle.click()
+  }
+
+  // R key to toggle rotation
+  if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    rotationToggle.click()
+  }
+
+  // C key to toggle circles/squares
+  if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    shapeToggle.click()
+  }
+
+  // I key to toggle instant render
+  if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    instantRenderToggle.click()
   }
 })
 

@@ -3,84 +3,172 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Interactive Sacks spiral visualization with prime number highlighting, animated clusters, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience." />
+  <meta name="keywords" content="Sacks spiral, prime numbers, mathematical visualization, number theory, interactive math, spiral patterns" />
   <title>Spiral Animator</title>
+  <link rel="icon" type="image/png" href="/public/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+  <link rel="shortcut icon" href="/public/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/public/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Spiral Anim" />
+  <link rel="manifest" href="/public/site.webmanifest" />
+
+  <!-- Resource hints for performance -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+
+  <!-- Critical CSS inlined for instant render -->
+  <style>
+    canvas { display: block; }
+    body { margin: 0; overflow: hidden; background: #000; color: #00ff00; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100vh; width: 280px;
+      background: rgba(33, 33, 33, 0.95); transform: translateX(0);
+      transition: transform 0.3s ease; z-index: 1000;
+    }
+    .sidebar.collapsed { transform: translateX(-260px); }
+    .sidebar-toggle {
+      position: fixed; top: 20px; left: 20px; z-index: 1001;
+      background: rgba(33, 33, 33, 0.9); border: 2px solid #333;
+      border-radius: 8px; padding: 10px; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      color: #00ff00; font-family: monospace;
+    }
+  </style>
+
   <link href="./src/style.css" rel="stylesheet" />
 </head>
 <body class="bg-black text-[#00ff00]">
-  <div class="sidebar flex flex-col justify-between" id="sidebar">
+  <!-- Skip link for keyboard navigation -->
+  <a href="#spiralCanvas" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-green-500 focus:text-black focus:px-4 focus:py-2 focus:rounded">
+    Skip to main content
+  </a>
+
+  <div class="sidebar flex flex-col justify-between" id="sidebar" role="complementary" aria-label="Spiral visualization controls">
     <div>
       <div class="sidebar-title">Spiral Controls</div>
 
-      <button id="primeToggle" class="toggle-button active">
+      <button id="primeToggle" class="toggle-button active"
+              role="switch" aria-checked="true"
+              aria-label="Toggle prime number highlighting">
         Default Prime Numbers
       </button>
 
-      <button id="clusterToggle" class="toggle-button cluster-toggle">
+      <button id="clusterToggle" class="toggle-button cluster-toggle"
+              role="switch" aria-checked="false"
+              aria-label="Toggle cluster animation">
         Start Animation
       </button>
 
-      <button id="rotationToggle" class="toggle-button rotation-toggle">
+      <button id="rotationToggle" class="toggle-button rotation-toggle"
+              role="switch" aria-checked="false"
+              aria-label="Toggle spiral rotation">
         Start Rotation
       </button>
 
-      <button id="shapeToggle" class="toggle-button shape-toggle">
+      <button id="shapeToggle" class="toggle-button shape-toggle"
+              role="switch" aria-checked="false"
+              aria-label="Toggle between circles and squares">
         Use Squares
+      </button>
+
+      <button id="instantRenderToggle" class="toggle-button instant-render-toggle"
+              role="switch" aria-checked="false"
+              aria-label="Toggle instant render for powerful machines">
+        Enable Instant Render
       </button>
 
       <div class="spiral-control">
         <div class="control-group">
           <label for="spiralSlider">Spiral Coefficient</label>
-          <input type="range" id="spiralSlider" min="2" max="200" value="100" step="0.1">
-          <input type="number" id="spiralNumber" min="0" max="2000" value="100" step="0.1">
+          <input type="range" id="spiralSlider" min="2" max="200" value="100" step="0.1"
+                 aria-describedby="spiralNumber">
+          <input type="number" id="spiralNumber" min="0" max="2000" value="100" step="0.1"
+                 aria-label="Spiral coefficient numeric input">
         </div>
 
         <div class="control-group">
           <label for="maxNSlider">Max N (Point Count)</label>
-          <input type="range" id="maxNSlider" min="20000" max="190000" value="20000" step="1000">
-          <input type="number" id="maxNNumber" min="0" max="1900000" value="20000" step="1000">
+          <input type="range" id="maxNSlider" min="20000" max="190000" value="20000" step="1000"
+                 aria-describedby="maxNNumber">
+          <input type="number" id="maxNNumber" min="0" max="1900000" value="20000" step="1000"
+                 aria-label="Maximum point count numeric input">
         </div>
 
         <div class="control-group">
           <label for="clusterCountSlider">Cluster Count</label>
-          <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1">
-          <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10">
+          <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
+                 aria-describedby="clusterCountNumber">
+          <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10"
+                 aria-label="Cluster count numeric input">
         </div>
 
         <div class="control-group">
           <label for="rotationSpeedSlider">Rotation Speed</label>
-          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="1.0" step="0.1">
-          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="1.0" step="0.1">
+          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="1.0" step="0.1"
+                 aria-describedby="rotationSpeedNumber">
+          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="1.0" step="0.1"
+                 aria-label="Rotation speed numeric input">
         </div>
 
         <div class="control-group">
           <label for="dotSizeSlider">Dot/Square Size</label>
-          <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="2.0" step="0.1">
-          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="2.0" step="0.1">
+          <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="2.0" step="0.1"
+                 aria-describedby="dotSizeNumber">
+          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="2.0" step="0.1"
+                 aria-label="Dot or square size numeric input">
         </div>
 
         <div class="control-group">
           <label for="primeSizeSlider">Prime Size Multiplier</label>
-          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="2.0" step="0.1">
-          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="2.0" step="0.1">
+          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="2.0" step="0.1"
+                 aria-describedby="primeSizeNumber">
+          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="2.0" step="0.1"
+                 aria-label="Prime number size multiplier numeric input">
         </div>
       </div>
     </div>
 
     <div class="mt-4">
       <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
+
+      <details class="mb-4">
+        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2">
+          Keyboard Shortcuts
+        </summary>
+        <div class="text-xs text-[#00aa00] space-y-1">
+          <div><kbd class="bg-gray-700 px-1 rounded">ESC</kbd> Exit fullscreen / Close sidebar</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">F</kbd> Toggle fullscreen</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">S</kbd> Toggle sidebar</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">P</kbd> Toggle prime highlighting</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">A</kbd> Toggle animation</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
+        </div>
+      </details>
+
       <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
     </div>
   </div>
 
-  <button class="sidebar-toggle" id="sidebarToggle">✕</button>
+  <button class="sidebar-toggle" id="sidebarToggle"
+          aria-label="Toggle sidebar visibility"
+          aria-expanded="true"
+          aria-controls="sidebar">✕</button>
 
-  <button class="fullscreen-toggle" id="fullscreenToggle" title="Toggle Fullscreen">⛶</button>
+  <button class="fullscreen-toggle" id="fullscreenToggle"
+          title="Toggle Fullscreen"
+          aria-label="Toggle fullscreen mode">⛶</button>
 
-  <div class="fullscreen-toast" id="fullscreenToast">
+  <div class="fullscreen-toast" id="fullscreenToast" role="alert" aria-live="polite">
     Press ESC to exit fullscreen
   </div>
 
-  <canvas id="spiralCanvas" class="w-full h-full"></canvas>
+  <canvas id="spiralCanvas" class="w-full h-full"
+          role="img"
+          aria-label="Interactive Sacks spiral visualization showing numbered points with prime numbers highlighted">
+  </canvas>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
