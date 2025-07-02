@@ -3,17 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sacks Spiral Clusters with Free Movement</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Spiral Clusters with Free Movement</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <style>
     canvas { display: block; }
     body   { margin: 0; overflow: hidden; }
-    .toggle-button {
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 280px;
+      background: rgba(33, 33, 33, 0.95);
+      border-right: 2px solid #333;
+      padding: 20px;
+      z-index: 1000;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-260px);
+    }
+
+    .sidebar-toggle {
       position: fixed;
       top: 20px;
       left: 20px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.9);
+      z-index: 1001;
+      background: rgba(33, 33, 33, 0.9);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar.collapsed + .sidebar-toggle {
+      left: 20px;
+    }
+
+    .sidebar:not(.collapsed) + .sidebar-toggle {
+      left: 260px;
+    }
+
+    .sidebar-toggle:hover {
+      background: rgba(33, 33, 33, 1);
+      transform: scale(1.05);
+    }
+
+    .toggle-button {
+      width: 100%;
+      background: rgba(33, 33, 33, 0.9);
       border: 2px solid #333;
       border-radius: 8px;
       padding: 10px 15px;
@@ -21,87 +72,250 @@
       font-family: monospace;
       font-size: 14px;
       transition: all 0.3s ease;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      display: block;
     }
-    .cluster-toggle {
-      top: 80px;
-    }
+
     .toggle-button:hover {
-      background: rgba(255, 255, 255, 1);
-      transform: scale(1.05);
+      background: rgba(33, 33, 33, 1);
+      transform: scale(1.02);
     }
+
     .toggle-button.active {
-      background: rgba(255, 100, 100, 0.9);
-      color: white;
-      border-color: #ff6464;
+      background: rgba(0, 235, 0, 0.9);
+      color: black;
+      border-color: #000000;
     }
+
     .cluster-toggle.active {
       background: rgba(100, 255, 100, 0.9);
-      color: white;
+      color: black;
       border-color: #64ff64;
     }
+
     .spiral-control {
-      position: fixed;
-      top: 140px;
-      left: 20px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.9);
-      border: 2px solid #333;
+      background: rgba(55, 55, 55, 0.8);
+      border: 1px solid rgba(88, 88, 88, 0.8);;
       border-radius: 8px;
       padding: 15px;
       font-family: monospace;
       font-size: 14px;
-      min-width: 200px;
+      margin-top: 20px;
     }
+
+    .control-group {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(111, 111, 111, 0.8);
+    }
+
+    .control-group:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
     .spiral-control label {
       display: block;
       margin-bottom: 8px;
       font-weight: bold;
     }
+
     .spiral-control input[type="range"] {
       width: 100%;
       margin-bottom: 8px;
     }
-    .spiral-control .value-display {
-      text-align: center;
+
+    .spiral-control input[type="number"] {
+      width: 100%;
+      padding: 4px 8px;
+      border: 1px solid rgba(111, 111, 111, 0.8);
+      background-color: rgba(33, 33, 33, 1);
+      border-radius: 4px;
+      font-family: monospace;
       font-size: 12px;
-      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .sidebar-title {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 10px;
     }
   </style>
 </head>
-<body class="bg-black">
-  <button id="primeToggle" class="toggle-button">
-    Show Prime Numbers
-  </button>
-  <button id="clusterToggle" class="toggle-button cluster-toggle active">
-    Stop Animation
-  </button>
-  <div class="spiral-control">
-    <label for="spiralSlider">Spiral Coefficient</label>
-    <input type="range" id="spiralSlider" min="2" max="100" value="2" step="0.1">
-    <div class="value-display" id="spiralValue">2.0</div>
+<body class="bg-black text-[#00ff00]">
+  <div class="sidebar flex flex-col justify-between" id="sidebar">
+    <div>
+      <div class="sidebar-title">Spiral Controls</div>
+
+      <button id="primeToggle" class="toggle-button active">
+        Hide Prime Numbers
+      </button>
+
+      <button id="clusterToggle" class="toggle-button cluster-toggle">
+        Start Animation
+      </button>
+
+      <div class="spiral-control">
+        <div class="control-group">
+          <label for="spiralSlider">Spiral Coefficient</label>
+          <input type="range" id="spiralSlider" min="2" max="200" value="100" step="0.1">
+          <input type="number" id="spiralNumber" min="0" max="2000" value="100" step="0.1">
+        </div>
+
+        <div class="control-group">
+          <label for="maxNSlider">Max N (Point Count)</label>
+          <input type="range" id="maxNSlider" min="20000" max="190000" value="20000" step="1000">
+          <input type="number" id="maxNNumber" min="0" max="1900000" value="20000" step="1000">
+        </div>
+
+        <div class="control-group">
+          <label for="clusterCountSlider">Cluster Count</label>
+          <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1">
+          <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
+      <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
+    </div>
   </div>
+
+  <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
   <canvas id="spiralCanvas" class="w-full h-full"></canvas>
   <script>
     const canvas = document.getElementById('spiralCanvas')
     const ctx    = canvas.getContext('2d')
 
     // spiral settings
-    let scale = 4
-    const maxN = 190000
-    let spiralCoeff = 2
+    // let scale = 4 // v2
+    let scale = 6 // v1
+    // const maxN = 1900000 // v2
+    let maxN = 20000 // v1
+    let spiralCoeff = 100
+    // let spiralCoeff = 2 // v2
     let points = []
-    let showPrimes = false
-    let showClusters = true
+    let showPrimes = true
+    let showClusters = false
 
     // cluster settings
-    const clusterCount  = 150
-    const clusterRadius = 100
+    let clusterCount = 100 // v1
+    // const clusterCount  = 150 // v2
+    const clusterRadius = 200
     const sizeBoost     = 1
-    const liftHeight    = 20
+    const liftHeight    = 10
     const trailAlpha    = 0.25
 
     const clusters = []
+
+    // IndexedDB storage for user preferences
+    let db;
+    const DB_NAME = 'SpiralPrefs';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'preferences';
+
+    // Initialize IndexedDB
+    function initDB() {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onerror = () => console.warn('IndexedDB not available');
+
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        loadPreferences();
+      };
+
+      request.onupgradeneeded = (event) => {
+        db = event.target.result;
+        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+    }
+
+    // Save preference to IndexedDB
+    function savePreference(key, value) {
+      if (!db) return;
+
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const objectStore = transaction.objectStore(STORE_NAME);
+      objectStore.put({ id: key, value: value });
+    }
+
+    // Load all preferences from IndexedDB
+    function loadPreferences() {
+      if (!db) return;
+
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const objectStore = transaction.objectStore(STORE_NAME);
+
+      // Load sidebar state
+      objectStore.get('sidebarCollapsed').onsuccess = (event) => {
+        if (event.target.result) {
+          const sidebar = document.getElementById('sidebar');
+          const toggle = document.getElementById('sidebarToggle');
+          if (event.target.result.value) {
+            sidebar.classList.add('collapsed');
+            toggle.textContent = '☰';
+          }
+        }
+      };
+
+      // Load spiral coefficient
+      objectStore.get('spiralCoeff').onsuccess = (event) => {
+        if (event.target.result) {
+          spiralCoeff = event.target.result.value;
+          document.getElementById('spiralSlider').value = spiralCoeff;
+          document.getElementById('spiralNumber').value = spiralCoeff;
+          computePoints();
+        }
+      };
+
+      // Load maxN
+      objectStore.get('maxN').onsuccess = (event) => {
+        if (event.target.result) {
+          maxN = event.target.result.value;
+          document.getElementById('maxNSlider').value = maxN;
+          document.getElementById('maxNNumber').value = maxN;
+          computePoints();
+        }
+      };
+
+      // Load cluster count
+      objectStore.get('clusterCount').onsuccess = (event) => {
+        if (event.target.result) {
+          clusterCount = event.target.result.value;
+          document.getElementById('clusterCountSlider').value = clusterCount;
+          document.getElementById('clusterCountNumber').value = clusterCount;
+          initClusters();
+        }
+      };
+
+      // Load show primes
+      objectStore.get('showPrimes').onsuccess = (event) => {
+        if (event.target.result !== undefined) {
+          showPrimes = event.target.result.value;
+          const primeToggle = document.getElementById('primeToggle');
+          primeToggle.classList.toggle('active', showPrimes);
+          primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Highlight Prime Numbers';
+        }
+      };
+
+      // Load show clusters
+      objectStore.get('showClusters').onsuccess = (event) => {
+        if (event.target.result !== undefined) {
+          showClusters = event.target.result.value;
+          const clusterToggle = document.getElementById('clusterToggle');
+          clusterToggle.classList.toggle('active', showClusters);
+          clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation';
+        }
+      };
+    }
 
     // Prime number checking function
     function isPrime(n) {
@@ -124,7 +338,11 @@
     function computePoints() {
       const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2
       points = []
-      for (let n = 1; n <= maxN; n++) {
+
+      // Performance safety: limit computation for very large values
+      const effectiveMaxN = Math.min(maxN, 2000000) // Hard cap at 2M points
+
+      for (let n = 1; n <= effectiveMaxN; n++) {
         const r = Math.sqrt(n) * scale
         const θ = spiralCoeff * Math.PI * Math.sqrt(n)
         const x = cx + r * Math.cos(θ)
@@ -132,12 +350,20 @@
         if (x<0||x>W||y<0||y>H) continue
         points.push({x, y, n, isPrime: isPrime(n)})
       }
+
+      if (maxN > effectiveMaxN) {
+        console.warn(`Capped point calculation at ${effectiveMaxN} for performance`)
+      }
     }
 
     function initClusters() {
       clusters.length = 0
       const W = canvas.width, H = canvas.height
-      for (let i = 0; i < clusterCount; i++) {
+
+      // Performance safety: limit clusters for very large values
+      const effectiveClusterCount = Math.min(clusterCount, 1000) // Hard cap at 1000 clusters
+
+      for (let i = 0; i < effectiveClusterCount; i++) {
         const x = Math.random()*W
         const y = Math.random()*H
         clusters.push({
@@ -146,6 +372,10 @@
           targetY: Math.random()*H,
           speed: 2 + Math.random()*1.0  // px per frame
         })
+      }
+
+      if (clusterCount > effectiveClusterCount) {
+        console.warn(`Capped cluster count at ${effectiveClusterCount} for performance`)
       }
     }
 
@@ -194,9 +424,9 @@
 
         // Set color based on prime status and toggle state
         if (showPrimes && p.isPrime) {
-          ctx.fillStyle = '#ff4444' // Red for primes
+          ctx.fillStyle = '#00ff00' // Red for primes
         } else {
-          ctx.fillStyle = '#ffffff' // White for non-primes or when toggle is off
+          ctx.fillStyle = '#009900' // White for non-primes or when toggle is off
         }
 
         ctx.beginPath()
@@ -222,12 +452,23 @@
       computePoints()
     }, { passive: false })
 
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar')
+    const sidebarToggle = document.getElementById('sidebarToggle')
+
+    sidebarToggle.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.toggle('collapsed')
+      sidebarToggle.textContent = isCollapsed ? '☰' : '✕'
+      savePreference('sidebarCollapsed', isCollapsed)
+    })
+
     // Prime toggle functionality
     const primeToggle = document.getElementById('primeToggle')
     primeToggle.addEventListener('click', () => {
       showPrimes = !showPrimes
       primeToggle.classList.toggle('active', showPrimes)
-      primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Show Prime Numbers'
+      primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Highlight Prime Numbers'
+      savePreference('showPrimes', showPrimes)
     })
 
     // Cluster toggle functionality
@@ -236,18 +477,91 @@
       showClusters = !showClusters
       clusterToggle.classList.toggle('active', showClusters)
       clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation'
+      savePreference('showClusters', showClusters)
     })
 
     // Spiral coefficient slider functionality
     const spiralSlider = document.getElementById('spiralSlider')
-    const spiralValue = document.getElementById('spiralValue')
+    const spiralNumber = document.getElementById('spiralNumber')
+
     spiralSlider.addEventListener('input', (e) => {
       spiralCoeff = parseFloat(e.target.value)
-      spiralValue.textContent = spiralCoeff.toFixed(1)
+      spiralNumber.value = spiralCoeff
+      savePreference('spiralCoeff', spiralCoeff)
       computePoints()
     })
 
+    spiralNumber.addEventListener('input', (e) => {
+      const value = parseFloat(e.target.value)
+      if (value >= 0 && value <= 2000 && !isNaN(value)) {
+        spiralCoeff = value
+        // Only update slider if value is within slider range
+        if (value >= 2 && value <= 200) {
+          spiralSlider.value = spiralCoeff
+        }
+        savePreference('spiralCoeff', spiralCoeff)
+        computePoints()
+      }
+    })
+
+    // Max N slider functionality
+    const maxNSlider = document.getElementById('maxNSlider')
+    const maxNNumber = document.getElementById('maxNNumber')
+
+    maxNSlider.addEventListener('input', (e) => {
+      maxN = parseInt(e.target.value)
+      maxNNumber.value = maxN
+      savePreference('maxN', maxN)
+      computePoints()
+    })
+
+    maxNNumber.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value)
+      if (value >= 1 && value <= 1900000 && !isNaN(value)) {
+        maxN = value
+        // Only update slider if value is within slider range
+        if (value >= 20000 && value <= 190000) {
+          maxNSlider.value = maxN
+        }
+        // Add performance warning for very large values
+        if (value > 500000) {
+          console.warn(`Warning: Using ${value} points may impact performance`)
+        }
+        savePreference('maxN', maxN)
+        computePoints()
+      }
+    })
+
+    // Cluster count slider functionality
+    const clusterCountSlider = document.getElementById('clusterCountSlider')
+    const clusterCountNumber = document.getElementById('clusterCountNumber')
+
+    clusterCountSlider.addEventListener('input', (e) => {
+      clusterCount = parseInt(e.target.value)
+      clusterCountNumber.value = clusterCount
+      savePreference('clusterCount', clusterCount)
+      initClusters()
+    })
+
+    clusterCountNumber.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value)
+      if (value >= 0 && value <= 2000 && !isNaN(value)) {
+        clusterCount = value
+        // Only update slider if value is within slider range
+        if (value >= 100 && value <= 200) {
+          clusterCountSlider.value = clusterCount
+        }
+        // Add performance warning for very large values
+        if (value > 500) {
+          console.warn(`Warning: Using ${value} clusters may impact performance`)
+        }
+        savePreference('clusterCount', clusterCount)
+        initClusters()
+      }
+    })
+
     window.addEventListener('resize', resize)
+    initDB()
     resize()
     requestAnimationFrame(drawFrame)
   </script>
