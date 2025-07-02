@@ -8,9 +8,79 @@
   <style>
     canvas { display: block; }
     body   { margin: 0; overflow: hidden; }
+    .toggle-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+    .cluster-toggle {
+      top: 80px;
+    }
+    .toggle-button:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.05);
+    }
+    .toggle-button.active {
+      background: rgba(255, 100, 100, 0.9);
+      color: white;
+      border-color: #ff6464;
+    }
+    .cluster-toggle.active {
+      background: rgba(100, 255, 100, 0.9);
+      color: white;
+      border-color: #64ff64;
+    }
+    .spiral-control {
+      position: fixed;
+      top: 140px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 14px;
+      min-width: 200px;
+    }
+    .spiral-control label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    .spiral-control input[type="range"] {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .spiral-control .value-display {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
 <body class="bg-black">
+  <button id="primeToggle" class="toggle-button">
+    Show Prime Numbers
+  </button>
+  <button id="clusterToggle" class="toggle-button cluster-toggle active">
+    Stop Animation
+  </button>
+  <div class="spiral-control">
+    <label for="spiralSlider">Spiral Coefficient</label>
+    <input type="range" id="spiralSlider" min="2" max="100" value="2" step="0.1">
+    <div class="value-display" id="spiralValue">2.0</div>
+  </div>
   <canvas id="spiralCanvas" class="w-full h-full"></canvas>
   <script>
     const canvas = document.getElementById('spiralCanvas')
@@ -19,7 +89,10 @@
     // spiral settings
     let scale = 4
     const maxN = 190000
+    let spiralCoeff = 2
     let points = []
+    let showPrimes = false
+    let showClusters = true
 
     // cluster settings
     const clusterCount  = 150
@@ -29,6 +102,17 @@
     const trailAlpha    = 0.25
 
     const clusters = []
+
+    // Prime number checking function
+    function isPrime(n) {
+      if (n < 2) return false
+      if (n === 2) return true
+      if (n % 2 === 0) return false
+      for (let i = 3; i * i <= n; i += 2) {
+        if (n % i === 0) return false
+      }
+      return true
+    }
 
     function resize() {
       canvas.width  = innerWidth
@@ -42,11 +126,11 @@
       points = []
       for (let n = 1; n <= maxN; n++) {
         const r = Math.sqrt(n) * scale
-        const θ = 100 * Math.PI * Math.sqrt(n)
+        const θ = spiralCoeff * Math.PI * Math.sqrt(n)
         const x = cx + r * Math.cos(θ)
         const y = cy + r * Math.sin(θ)
         if (x<0||x>W||y<0||y>H) continue
-        points.push({x,y})
+        points.push({x, y, n, isPrime: isPrime(n)})
       }
     }
 
@@ -84,26 +168,36 @@
     }
 
     function drawFrame() {
-      updateClusters()
+      if (showClusters) {
+        updateClusters()
+      }
 
       // fading trail
       ctx.fillStyle = `rgba(0,0,0,${trailAlpha})`
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      ctx.fillStyle = 'white'
       for (const p of points) {
         let factor = 0
-        for (const c of clusters) {
-          const dx = p.x - c.x, dy = p.y - c.y
-          if (Math.abs(dx) < clusterRadius && Math.abs(dy) < clusterRadius) {
-            const fx = 1 - Math.abs(dx) / clusterRadius
-            const fy = 1 - Math.abs(dy) / clusterRadius
-            const squareFalloff = Math.min(fx, fy)
-            factor = Math.max(factor, squareFalloff)
+        if (showClusters) {
+          for (const c of clusters) {
+            const dx = p.x - c.x, dy = p.y - c.y
+            if (Math.abs(dx) < clusterRadius && Math.abs(dy) < clusterRadius) {
+              const fx = 1 - Math.abs(dx) / clusterRadius
+              const fy = 1 - Math.abs(dy) / clusterRadius
+              const squareFalloff = Math.min(fx, fy)
+              factor = Math.max(factor, squareFalloff)
+            }
           }
         }
         const size    = 2 + factor * sizeBoost
         const offsetY = -factor * liftHeight
+
+        // Set color based on prime status and toggle state
+        if (showPrimes && p.isPrime) {
+          ctx.fillStyle = '#ff4444' // Red for primes
+        } else {
+          ctx.fillStyle = '#ffffff' // White for non-primes or when toggle is off
+        }
 
         ctx.beginPath()
         ctx.arc(p.x, p.y + offsetY, size/2, 0, 2*Math.PI)
@@ -127,6 +221,31 @@
       scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
       computePoints()
     }, { passive: false })
+
+    // Prime toggle functionality
+    const primeToggle = document.getElementById('primeToggle')
+    primeToggle.addEventListener('click', () => {
+      showPrimes = !showPrimes
+      primeToggle.classList.toggle('active', showPrimes)
+      primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Show Prime Numbers'
+    })
+
+    // Cluster toggle functionality
+    const clusterToggle = document.getElementById('clusterToggle')
+    clusterToggle.addEventListener('click', () => {
+      showClusters = !showClusters
+      clusterToggle.classList.toggle('active', showClusters)
+      clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation'
+    })
+
+    // Spiral coefficient slider functionality
+    const spiralSlider = document.getElementById('spiralSlider')
+    const spiralValue = document.getElementById('spiralValue')
+    spiralSlider.addEventListener('input', (e) => {
+      spiralCoeff = parseFloat(e.target.value)
+      spiralValue.textContent = spiralCoeff.toFixed(1)
+      computePoints()
+    })
 
     window.addEventListener('resize', resize)
     resize()
