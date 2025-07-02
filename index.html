@@ -142,6 +142,98 @@
       border-bottom: 2px solid #333;
       padding-bottom: 10px;
     }
+
+    /* Custom scrollbar for sidebar */
+    .sidebar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 0, 0.6);
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 255, 0, 0.8);
+    }
+
+    /* Firefox scrollbar */
+    .sidebar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 255, 0, 0.6) rgba(0, 0, 0, 0.3);
+    }
+
+    .fullscreen-toggle {
+      position: fixed;
+      top: 70px;
+      left: 20px;
+      z-index: 1001;
+      background: rgba(33, 33, 33, 0.9);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #00ff00;
+    }
+
+    .sidebar:not(.collapsed) + .sidebar-toggle + .fullscreen-toggle {
+      left: 260px;
+    }
+
+    .fullscreen-toggle:hover {
+      background: rgba(33, 33, 33, 1);
+      transform: scale(1.05);
+    }
+
+    .fullscreen-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(33, 33, 33, 0.95);
+      border: 2px solid #00ff00;
+      border-radius: 12px;
+      padding: 20px 30px;
+      font-family: monospace;
+      font-size: 16px;
+      color: #00ff00;
+      z-index: 2000;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .fullscreen-toast.show {
+      opacity: 1;
+    }
+
+    .fullscreen-toast::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid #00ff00;
+    }
   </style>
 </head>
 <body class="bg-black text-[#00ff00]">
@@ -150,7 +242,7 @@
       <div class="sidebar-title">Spiral Controls</div>
 
       <button id="primeToggle" class="toggle-button active">
-        Hide Prime Numbers
+        Default Prime Numbers
       </button>
 
       <button id="clusterToggle" class="toggle-button cluster-toggle">
@@ -204,13 +296,19 @@
       </div>
     </div>
 
-    <div>
+    <div class="mt-4">
       <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
       <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
     </div>
   </div>
 
-  <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+  <button class="sidebar-toggle" id="sidebarToggle">✕</button>
+
+  <button class="fullscreen-toggle" id="fullscreenToggle" title="Toggle Fullscreen">⛶</button>
+
+  <div class="fullscreen-toast" id="fullscreenToast">
+    Press ESC to exit fullscreen
+  </div>
 
   <canvas id="spiralCanvas" class="w-full h-full"></canvas>
   <script>
@@ -218,12 +316,9 @@
     const ctx    = canvas.getContext('2d')
 
     // spiral settings
-    // let scale = 4 // v2
-    let scale = 6 // v1
-    // const maxN = 1900000 // v2
-    let maxN = 20000 // v1
+    let scale = 3
+    let maxN = 20000
     let spiralCoeff = 100
-    // let spiralCoeff = 2 // v2
     let points = []
     let showPrimes = true
     let showClusters = false
@@ -233,16 +328,94 @@
     let useSquares = false
     let dotSize = 2.0
     let primeSize = 2.0
+    let isFullscreen = false
 
     // cluster settings
-    let clusterCount = 100 // v1
-    // const clusterCount  = 150 // v2
+    let clusterCount = 100
     const clusterRadius = 200
     const sizeBoost     = 1
     const liftHeight    = 10
     const trailAlpha    = 0.25
 
     const clusters = []
+
+    // Fullscreen functionality
+    let toastTimeout = null
+
+    function showFullscreenToast() {
+      const toast = document.getElementById('fullscreenToast')
+      toast.classList.add('show')
+
+      // Clear existing timeout
+      if (toastTimeout) {
+        clearTimeout(toastTimeout)
+      }
+
+      // Hide toast after 3 seconds
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show')
+      }, 3000)
+    }
+
+    function enterFullscreen() {
+      const element = document.documentElement
+      if (element.requestFullscreen) {
+        element.requestFullscreen()
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen()
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen()
+      }
+    }
+
+    function exitFullscreen() {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen()
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!isFullscreen) {
+        enterFullscreen()
+      } else {
+        exitFullscreen()
+      }
+    }
+
+    function updateFullscreenState() {
+      const wasFullscreen = isFullscreen
+      isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement)
+
+      const sidebar = document.getElementById('sidebar')
+      const sidebarToggle = document.getElementById('sidebarToggle')
+      const fullscreenToggle = document.getElementById('fullscreenToggle')
+
+      if (isFullscreen) {
+        // Hide all UI elements in fullscreen for screensaver experience
+        sidebar.style.display = 'none'
+        sidebarToggle.style.display = 'none'
+        fullscreenToggle.style.display = 'none'
+
+        // Show toast when entering fullscreen
+        if (!wasFullscreen) {
+          showFullscreenToast()
+        }
+      } else {
+        // Show all UI elements when exiting fullscreen
+        sidebar.style.display = 'flex'
+        sidebarToggle.style.display = 'flex'
+        fullscreenToggle.style.display = 'flex'
+        fullscreenToggle.textContent = '⛶'
+        fullscreenToggle.title = 'Toggle Fullscreen'
+
+        // Hide toast when exiting fullscreen
+        document.getElementById('fullscreenToast').classList.remove('show')
+      }
+    }
 
     // IndexedDB storage for user preferences
     let db;
@@ -291,7 +464,13 @@
           if (event.target.result.value) {
             sidebar.classList.add('collapsed');
             toggle.textContent = '☰';
+          } else {
+            // Sidebar is open, so show close icon
+            toggle.textContent = '✕';
           }
+        } else {
+          // No saved state, sidebar is open by default, show close icon
+          document.getElementById('sidebarToggle').textContent = '✕';
         }
       };
 
@@ -331,7 +510,7 @@
           showPrimes = event.target.result.value;
           const primeToggle = document.getElementById('primeToggle');
           primeToggle.classList.toggle('active', showPrimes);
-          primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Highlight Prime Numbers';
+          primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers';
         }
       };
 
@@ -565,6 +744,29 @@
       computePoints()
     }, { passive: false })
 
+    // Prevent canvas zoom when scrolling over sidebar
+    const sidebarElement = document.getElementById('sidebar')
+    sidebarElement.addEventListener('wheel', e => {
+      // Stop wheel events from propagating to the window listener
+      e.stopPropagation()
+    }, { passive: true })
+
+    // Fullscreen toggle functionality
+    const fullscreenToggle = document.getElementById('fullscreenToggle')
+    fullscreenToggle.addEventListener('click', toggleFullscreen)
+
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', updateFullscreenState)
+    document.addEventListener('webkitfullscreenchange', updateFullscreenState)
+    document.addEventListener('msfullscreenchange', updateFullscreenState)
+
+    // Canvas click to show toast in fullscreen
+    canvas.addEventListener('click', () => {
+      if (isFullscreen) {
+        showFullscreenToast()
+      }
+    })
+
     // Sidebar toggle functionality
     const sidebar = document.getElementById('sidebar')
     const sidebarToggle = document.getElementById('sidebarToggle')
@@ -580,7 +782,7 @@
     primeToggle.addEventListener('click', () => {
       showPrimes = !showPrimes
       primeToggle.classList.toggle('active', showPrimes)
-      primeToggle.textContent = showPrimes ? 'Hide Prime Numbers' : 'Highlight Prime Numbers'
+      primeToggle.textContent = showPrimes ? 'Default Prime Numbers' : 'Highlight Prime Numbers'
       savePreference('showPrimes', showPrimes)
     })
 
