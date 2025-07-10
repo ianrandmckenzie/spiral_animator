@@ -1,3 +1,24 @@
+// Polyfill for requestIdleCallback in environments where it's not available
+if (typeof requestIdleCallback === 'undefined') {
+  window.requestIdleCallback = function(callback, options) {
+    const start = Date.now();
+    return setTimeout(function() {
+      callback({
+        didTimeout: false,
+        timeRemaining: function() {
+          return Math.max(0, 50 - (Date.now() - start));
+        }
+      });
+    }, 1);
+  };
+}
+
+if (typeof cancelIdleCallback === 'undefined') {
+  window.cancelIdleCallback = function(id) {
+    clearTimeout(id);
+  };
+}
+
 const canvas = document.getElementById('spiralCanvas')
 const ctx    = canvas.getContext('2d')
 
@@ -44,38 +65,69 @@ function showFullscreenToast() {
   }, 3000)
 }
 
-function enterFullscreen() {
-  const element = document.documentElement
-  if (element.requestFullscreen) {
-    element.requestFullscreen()
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen()
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen()
-  }
-}
-
-function exitFullscreen() {
-  if (document.exitFullscreen) {
-    document.exitFullscreen()
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen()
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen()
-  }
-}
-
-function toggleFullscreen() {
-  if (!isFullscreen) {
-    enterFullscreen()
+async function enterFullscreen() {
+  // Check if we're in Tauri environment
+  if (window.__TAURI__) {
+    try {
+      // Use Tauri's window API
+      await window.__TAURI__.window.getCurrentWindow().setFullscreen(true)
+    } catch (error) {
+      console.error('Failed to enter fullscreen:', error)
+    }
   } else {
-    exitFullscreen()
+    return;
+  }
+}
+
+async function exitFullscreen() {
+  // Check if we're in Tauri environment
+  if (window.__TAURI__) {
+    try {
+      // Use Tauri's window API
+      await window.__TAURI__.window.getCurrentWindow().setFullscreen(false)
+    } catch (error) {
+      console.error('Failed to exit fullscreen:', error)
+    }
+  } else {
+    return;
+  }
+}
+
+async function toggleFullscreen() {
+  if (window.__TAURI__) {
+    // For Tauri, we need to manually track the state
+    isFullscreen = !isFullscreen
+    if (isFullscreen) {
+      await enterFullscreen()
+    } else {
+      await exitFullscreen()
+    }
+    // Update UI immediately for Tauri
+    updateFullscreenState()
+    // Save fullscreen state
+    savePreference('isFullscreen', isFullscreen)
+  } else {
+    // Browser fullscreen - state will be updated by event listeners
+    if (!isFullscreen) {
+      await enterFullscreen()
+    } else {
+      await exitFullscreen()
+    }
   }
 }
 
 function updateFullscreenState() {
   const wasFullscreen = isFullscreen
-  isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement)
+
+  // Check fullscreen state based on environment
+  if (window.__TAURI__) {
+    // For Tauri, we need to track this manually since there's no direct API
+    // The state will be updated when we call setFullscreen
+    // isFullscreen is already set correctly in toggleFullscreen
+  } else {
+    // Browser fullscreen detection
+    isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement)
+  }
 
   const sidebar = document.getElementById('sidebar')
   const sidebarToggle = document.getElementById('sidebarToggle')
@@ -119,6 +171,12 @@ function initDB() {
   request.onsuccess = (event) => {
     db = event.target.result;
     loadPreferences();
+    // Load window state after a short delay to ensure Tauri APIs are ready
+    if (window.__TAURI__) {
+      setTimeout(() => {
+        loadWindowState();
+      }, 200);
+    }
   };
 
   request.onupgradeneeded = (event) => {
@@ -134,6 +192,136 @@ function savePreference(key, value) {
   const transaction = db.transaction([STORE_NAME], 'readwrite');
   const objectStore = transaction.objectStore(STORE_NAME);
   objectStore.put({ id: key, value: value });
+}
+
+// Save window state (Tauri only)
+async function saveWindowState() {
+  if (!window.__TAURI__) return;
+
+  try {
+    const currentWindow = window.__TAURI__.window.getCurrentWindow();
+    const size = await currentWindow.innerSize();
+    const position = await currentWindow.innerPosition();
+    const isMaximized = await currentWindow.isMaximized();
+
+    // Save window dimensions and position
+    savePreference('windowWidth', size.width);
+    savePreference('windowHeight', size.height);
+    savePreference('windowX', position.x);
+    savePreference('windowY', position.y);
+    savePreference('windowMaximized', isMaximized);
+
+    // Save fullscreen state
+    savePreference('isFullscreen', isFullscreen);
+
+    console.log('Window state saved:', { width: size.width, height: size.height, fullscreen: isFullscreen });
+  } catch (error) {
+    console.error('Failed to save window state:', error);
+  }
+}
+
+// Load and apply window state (Tauri only)
+async function loadWindowState() {
+  if (!window.__TAURI__ || !db) {
+    console.log('Skipping window state load - Tauri not available or DB not ready');
+    return;
+  }
+
+  console.log('Loading window state...');
+
+  try {
+    const currentWindow = window.__TAURI__.window.getCurrentWindow();
+
+    // Wait a bit more to ensure window is fully ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const objectStore = transaction.objectStore(STORE_NAME);
+
+    // Helper function to get values from IndexedDB
+    const getValue = (key) => new Promise(resolve => {
+      const request = objectStore.get(key);
+      request.onsuccess = () => resolve(request.result?.value);
+      request.onerror = () => resolve(null);
+    });
+
+    // Load all window state values
+    const [width, height, x, y, maximized, fullscreen] = await Promise.all([
+      getValue('windowWidth'),
+      getValue('windowHeight'),
+      getValue('windowX'),
+      getValue('windowY'),
+      getValue('windowMaximized'),
+      getValue('isFullscreen')
+    ]);
+
+    console.log('Loaded window state:', { width, height, x, y, maximized, fullscreen });
+
+    // Apply window size if saved
+    if (width && height && width > 200 && height > 200) {
+      try {
+        await currentWindow.setSize(new window.__TAURI__.window.LogicalSize(width, height));
+        console.log('✅ Window size restored:', width, 'x', height);
+      } catch (error) {
+        console.error('❌ Failed to restore window size:', error);
+      }
+    } else {
+      console.log('❌ No valid window size to restore');
+    }
+
+    // Apply window position if saved (validate it's reasonable)
+    if (x !== null && y !== null && x >= -1000 && y >= -1000) {
+      try {
+        await currentWindow.setPosition(new window.__TAURI__.window.LogicalPosition(x, y));
+        console.log('✅ Window position restored:', x, ',', y);
+      } catch (error) {
+        console.error('❌ Failed to restore window position:', error);
+      }
+    } else {
+      console.log('❌ No valid window position to restore');
+    }
+
+    // Apply maximized state if saved
+    if (maximized) {
+      try {
+        await currentWindow.maximize();
+        console.log('✅ Window maximized state restored');
+      } catch (error) {
+        console.error('❌ Failed to restore maximized state:', error);
+      }
+    }
+
+    // Apply fullscreen state if saved (with additional delay and better handling)
+    if (fullscreen) {
+      setTimeout(async () => {
+        try {
+          console.log('⚠️  Restoring fullscreen state...');
+          // DISABLE fullscreen restoration during development - set to true to enable
+          const shouldRestoreFullscreen = false; // Change to true when you want fullscreen restored
+
+          if (shouldRestoreFullscreen) {
+            isFullscreen = true;
+            await currentWindow.setFullscreen(true);
+            updateFullscreenState();
+            console.log('✅ Fullscreen state restored');
+          } else {
+            console.log('⏭️  Skipping fullscreen restoration (disabled for development)');
+            // Clear the saved fullscreen state so it doesn't keep trying
+            isFullscreen = false;
+            savePreference('isFullscreen', false);
+          }
+        } catch (error) {
+          console.error('❌ Failed to restore fullscreen state:', error);
+          // If fullscreen restoration fails, clear the saved state
+          isFullscreen = false;
+          savePreference('isFullscreen', false);
+        }
+      }, 300);
+    }
+
+  } catch (error) {
+    console.error('❌ Failed to load window state:', error);
+  }
 }
 
 // Load all preferences from IndexedDB
@@ -316,8 +504,8 @@ function isPrime(n) {
 }
 
 function resize() {
-  canvas.width  = innerWidth
-  canvas.height = innerHeight
+  canvas.width  = window.innerWidth
+  canvas.height = window.innerHeight
   computePoints()
   initClusters()
 }
@@ -850,10 +1038,22 @@ primeSizeNumber.addEventListener('input', (e) => {
 
 // Keyboard navigation support for accessibility
 document.addEventListener('keydown', (e) => {
+
+  // Don't handle shortcuts if user is typing in input fields
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return
+  }
+
   // ESC key to exit fullscreen or close sidebar
   if (e.key === 'Escape') {
     if (isFullscreen) {
-      exitFullscreen()
+      isFullscreen = false;
+      exitFullscreen();
+      updateFullscreenState();
+      // Save fullscreen state when exiting with ESC
+      if (window.__TAURI__) {
+        savePreference('isFullscreen', isFullscreen);
+      }
     } else if (!sidebar.classList.contains('collapsed')) {
       sidebarToggle.click()
     }
@@ -903,6 +1103,50 @@ document.addEventListener('keydown', (e) => {
 })
 
 window.addEventListener('resize', resize)
+
+// Ensure window can receive keyboard focus
+window.addEventListener('load', () => {
+  // Make sure the window can receive keyboard focus
+  if (document.body) {
+    document.body.tabIndex = -1
+    document.body.focus()
+  }
+
+  // For Tauri, try loading window state again on window load as a fallback
+  if (window.__TAURI__) {
+    setTimeout(() => {
+      console.log('Attempting window state restore from window load event...');
+      loadWindowState();
+    }, 500);
+  }
+})
+
+// Add window state saving listeners for Tauri
+if (window.__TAURI__) {
+  // Debounced function to save window state
+  const debouncedSaveWindowState = debounce(saveWindowState, 500);
+
+  // Listen for window resize events
+  window.addEventListener('resize', debouncedSaveWindowState);
+
+  // Listen for window move events (if available)
+  // Note: Tauri doesn't have direct move events, but we can save on focus changes
+  window.addEventListener('focus', debouncedSaveWindowState);
+  window.addEventListener('blur', debouncedSaveWindowState);
+
+  // Save window state when the page is about to unload
+  window.addEventListener('beforeunload', () => {
+    saveWindowState();
+  });
+
+  // Debug functions for manual testing
+  window.debugSaveWindowState = saveWindowState;
+  window.debugLoadWindowState = loadWindowState;
+
+  console.log('Tauri window state persistence enabled');
+  console.log('Debug commands available: debugSaveWindowState(), debugLoadWindowState()');
+}
+
 initDB()
 resize()
 requestAnimationFrame(drawFrame)
