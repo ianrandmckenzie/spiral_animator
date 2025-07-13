@@ -560,11 +560,23 @@ function loadPreferences() {
 
   // Load spiral coefficient
   objectStore.get('spiralCoeff').onsuccess = (event) => {
-    if (event.target.result) {
-      spiralCoeff = event.target.result.value;
-      document.getElementById('spiralSlider').value = spiralCoeff;
-      document.getElementById('spiralNumber').value = spiralCoeff;
-      computePoints();
+    if (event.target.result && event.target.result.value !== undefined) {
+      const loadedValue = parseFloat(event.target.result.value);
+      // Validate the loaded value
+      if (!isNaN(loadedValue) && isFinite(loadedValue) && loadedValue > 0) {
+        spiralCoeff = loadedValue;
+        document.getElementById('spiralSlider').value = spiralCoeff;
+        document.getElementById('spiralNumber').value = spiralCoeff;
+        computePoints();
+      } else {
+        // Invalid value, reset to default
+        console.warn('Invalid spiralCoeff value loaded, resetting to default (2)');
+        spiralCoeff = 2;
+        document.getElementById('spiralSlider').value = spiralCoeff;
+        document.getElementById('spiralNumber').value = spiralCoeff;
+        savePreference('spiralCoeff', spiralCoeff);
+        computePoints();
+      }
     }
   };
 
@@ -699,37 +711,61 @@ function loadPreferences() {
 
   // Load spiral animation speed
   objectStore.get('spiralAnimationSpeed').onsuccess = (event) => {
-    if (event.target.result) {
-      spiralAnimationSpeed = event.target.result.value;
-      document.getElementById('spiralAnimationSpeedSlider').value = spiralAnimationSpeed;
-      document.getElementById('spiralAnimationSpeedNumber').value = spiralAnimationSpeed;
+    if (event.target.result && event.target.result.value !== undefined) {
+      const loadedValue = parseInt(event.target.result.value);
+      if (!isNaN(loadedValue) && isFinite(loadedValue) && loadedValue >= 10 && loadedValue <= 2000) {
+        spiralAnimationSpeed = loadedValue;
+        document.getElementById('spiralAnimationSpeedSlider').value = spiralAnimationSpeed;
+        document.getElementById('spiralAnimationSpeedNumber').value = spiralAnimationSpeed;
+      } else {
+        console.warn('Invalid spiralAnimationSpeed value, using default (100)');
+        spiralAnimationSpeed = 100;
+      }
     }
   };
 
   // Load spiral animation increment
   objectStore.get('spiralAnimationIncrement').onsuccess = (event) => {
-    if (event.target.result) {
-      spiralAnimationIncrement = event.target.result.value;
-      document.getElementById('spiralAnimationIncrementSlider').value = spiralAnimationIncrement;
-      document.getElementById('spiralAnimationIncrementNumber').value = spiralAnimationIncrement;
+    if (event.target.result && event.target.result.value !== undefined) {
+      const loadedValue = parseFloat(event.target.result.value);
+      if (!isNaN(loadedValue) && isFinite(loadedValue) && loadedValue > 0 && loadedValue <= 10) {
+        spiralAnimationIncrement = loadedValue;
+        document.getElementById('spiralAnimationIncrementSlider').value = spiralAnimationIncrement;
+        document.getElementById('spiralAnimationIncrementNumber').value = spiralAnimationIncrement;
+      } else {
+        console.warn('Invalid spiralAnimationIncrement value, using default (0.1)');
+        spiralAnimationIncrement = 0.1;
+      }
     }
   };
 
   // Load spiral animation min
   objectStore.get('spiralAnimationMin').onsuccess = (event) => {
-    if (event.target.result) {
-      spiralAnimationMin = event.target.result.value;
-      document.getElementById('spiralAnimationMinSlider').value = spiralAnimationMin;
-      document.getElementById('spiralAnimationMinNumber').value = spiralAnimationMin;
+    if (event.target.result && event.target.result.value !== undefined) {
+      const loadedValue = parseFloat(event.target.result.value);
+      if (!isNaN(loadedValue) && isFinite(loadedValue) && loadedValue > 0) {
+        spiralAnimationMin = loadedValue;
+        document.getElementById('spiralAnimationMinSlider').value = spiralAnimationMin;
+        document.getElementById('spiralAnimationMinNumber').value = spiralAnimationMin;
+      } else {
+        console.warn('Invalid spiralAnimationMin value, using default (1)');
+        spiralAnimationMin = 1;
+      }
     }
   };
 
   // Load spiral animation max
   objectStore.get('spiralAnimationMax').onsuccess = (event) => {
-    if (event.target.result) {
-      spiralAnimationMax = event.target.result.value;
-      document.getElementById('spiralAnimationMaxSlider').value = spiralAnimationMax;
-      document.getElementById('spiralAnimationMaxNumber').value = spiralAnimationMax;
+    if (event.target.result && event.target.result.value !== undefined) {
+      const loadedValue = parseFloat(event.target.result.value);
+      if (!isNaN(loadedValue) && isFinite(loadedValue) && loadedValue > spiralAnimationMin) {
+        spiralAnimationMax = loadedValue;
+        document.getElementById('spiralAnimationMaxSlider').value = spiralAnimationMax;
+        document.getElementById('spiralAnimationMaxNumber').value = spiralAnimationMax;
+      } else {
+        console.warn('Invalid spiralAnimationMax value, using default (500)');
+        spiralAnimationMax = 500;
+      }
     }
   };
 }
@@ -1114,14 +1150,39 @@ function startSpiralCoeffAnimation() {
   if (spiralAnimationInterval) return; // Already animating
 
   spiralAnimationInterval = setInterval(() => {
-    spiralCoeff += spiralAnimationIncrement * spiralAnimationDirection;
+    // Validate all animation parameters before using them
+    if (isNaN(spiralCoeff) || !isFinite(spiralCoeff)) {
+      spiralCoeff = 2; // Reset to default
+    }
+    if (isNaN(spiralAnimationIncrement) || !isFinite(spiralAnimationIncrement) || spiralAnimationIncrement <= 0) {
+      spiralAnimationIncrement = 0.1; // Reset to default
+    }
+    if (isNaN(spiralAnimationMin) || !isFinite(spiralAnimationMin) || spiralAnimationMin <= 0) {
+      spiralAnimationMin = 1; // Reset to default
+    }
+    if (isNaN(spiralAnimationMax) || !isFinite(spiralAnimationMax) || spiralAnimationMax <= spiralAnimationMin) {
+      spiralAnimationMax = 500; // Reset to default
+    }
+
+    // Calculate new value
+    const newValue = spiralCoeff + (spiralAnimationIncrement * spiralAnimationDirection);
+
+    // Validate the new value before assigning
+    if (isNaN(newValue) || !isFinite(newValue)) {
+      console.warn('Invalid spiral coefficient calculated, resetting to safe value');
+      spiralCoeff = clamp(2, spiralAnimationMin, spiralAnimationMax);
+    } else {
+      spiralCoeff = newValue;
+    }
 
     // Reverse direction if out of bounds
     if (spiralCoeff <= spiralAnimationMin || spiralCoeff >= spiralAnimationMax) {
       spiralAnimationDirection *= -1;
+      // Clamp to bounds to prevent going beyond
+      spiralCoeff = clamp(spiralCoeff, spiralAnimationMin, spiralAnimationMax);
     }
 
-    // Update UI
+    // Update UI with validated value
     document.getElementById('spiralSlider').value = spiralCoeff;
     document.getElementById('spiralNumber').value = spiralCoeff;
 
@@ -1308,13 +1369,31 @@ function updateSpiralCoeffBounds() {
   const minInput = document.getElementById('spiralAnimationMinNumber');
   const maxInput = document.getElementById('spiralAnimationMaxNumber');
 
-  spiralAnimationMin = parseFloat(minInput.value);
-  spiralAnimationMax = parseFloat(maxInput.value);
+  const newMin = parseFloat(minInput.value);
+  const newMax = parseFloat(maxInput.value);
 
-  // Clamp current spiralCoeff to new bounds
+  // Validate the new values
+  if (!isNaN(newMin) && isFinite(newMin) && newMin > 0) {
+    spiralAnimationMin = newMin;
+  } else {
+    spiralAnimationMin = 1; // Default fallback
+    minInput.value = spiralAnimationMin;
+  }
+
+  if (!isNaN(newMax) && isFinite(newMax) && newMax > spiralAnimationMin) {
+    spiralAnimationMax = newMax;
+  } else {
+    spiralAnimationMax = Math.max(500, spiralAnimationMin + 10); // Default fallback
+    maxInput.value = spiralAnimationMax;
+  }
+
+  // Validate current spiralCoeff and clamp it to new bounds
+  if (isNaN(spiralCoeff) || !isFinite(spiralCoeff)) {
+    spiralCoeff = 2; // Reset to default if invalid
+  }
   spiralCoeff = clamp(spiralCoeff, spiralAnimationMin, spiralAnimationMax);
 
-  // Update UI
+  // Update UI with validated values
   document.getElementById('spiralSlider').value = spiralCoeff;
   document.getElementById('spiralNumber').value = spiralCoeff;
 
@@ -1663,6 +1742,12 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault()
     instantRenderToggle.click()
+  }
+
+  // M key to toggle spiral coefficient animation
+  if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    spiralAnimationToggle.click()
   }
 })
 
