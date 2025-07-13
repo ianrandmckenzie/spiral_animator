@@ -531,20 +531,21 @@ summary:hover {
 .tooltip-icon {
   display: none;
   position: absolute;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 255, 0, 0.9);
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 255, 0, 0.95);
   color: #000;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: bold;
   text-align: center;
-  line-height: 20px;
+  line-height: 24px;
   cursor: pointer;
   z-index: 1001;
   user-select: none;
   transition: all 0.2s ease;
-  border: 1px solid #000;
+  border: 2px solid #000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 /* Position for toggle buttons - outside the button on the right */
@@ -570,6 +571,11 @@ summary:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Ensure touch targets are large enough */
+    min-width: 24px;
+    min-height: 24px;
+    /* Add touch-friendly styling */
+    touch-action: manipulation;
   }
 
   /* Make sure there's enough space for the icon on toggle buttons */
@@ -582,6 +588,12 @@ summary:hover {
   .toggle-button:hover .tooltip {
     opacity: 0;
     visibility: hidden;
+  }
+
+  /* Ensure tooltips are clearly visible on mobile */
+  .tooltip.show {
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
 

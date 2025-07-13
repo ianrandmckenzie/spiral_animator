@@ -613,17 +613,17 @@ function loadPreferences() {
       const toggle = document.getElementById('sidebarToggle');
       if (event.target.result.value) {
         sidebar.classList.add('collapsed');
-        toggle.textContent = '☰';
+        updateButtonText(toggle, '☰');
         toggle.setAttribute('aria-expanded', 'false');
       } else {
         // Sidebar is open, so show close icon
-        toggle.textContent = '✕';
+        updateButtonText(toggle, '✕');
         toggle.setAttribute('aria-expanded', 'true');
       }
     } else {
       // No saved state, sidebar is open by default, show close icon
       const toggle = document.getElementById('sidebarToggle');
-      toggle.textContent = '✕';
+      updateButtonText(toggle, '✕');
       toggle.setAttribute('aria-expanded', 'true');
     }
   };
@@ -677,7 +677,7 @@ function loadPreferences() {
       const primeToggle = document.getElementById('primeToggle');
       primeToggle.classList.toggle('active', showPrimes);
       primeToggle.setAttribute('aria-checked', showPrimes.toString());
-      primeToggle.textContent = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers';
+      updateButtonText(primeToggle, showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers');
     }
   };
 
@@ -688,7 +688,7 @@ function loadPreferences() {
       const clusterToggle = document.getElementById('clusterToggle');
       clusterToggle.classList.toggle('active', showClusters);
       clusterToggle.setAttribute('aria-checked', showClusters.toString());
-      clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation';
+      updateButtonText(clusterToggle, showClusters ? 'Stop Animation' : 'Start Animation');
     }
   };
 
@@ -699,7 +699,7 @@ function loadPreferences() {
       const rotationToggle = document.getElementById('rotationToggle');
       rotationToggle.classList.toggle('active', showRotation);
       rotationToggle.setAttribute('aria-checked', showRotation.toString());
-      rotationToggle.textContent = showRotation ? 'Stop Rotation' : 'Start Rotation';
+      updateButtonText(rotationToggle, showRotation ? 'Stop Rotation' : 'Start Rotation');
     }
   };
 
@@ -719,7 +719,7 @@ function loadPreferences() {
       const shapeToggle = document.getElementById('shapeToggle');
       shapeToggle.classList.toggle('active', useSquares);
       shapeToggle.setAttribute('aria-checked', useSquares.toString());
-      shapeToggle.textContent = useSquares ? 'Use Circles' : 'Use Squares';
+      updateButtonText(shapeToggle, useSquares ? 'Use Circles' : 'Use Squares');
     }
   };
 
@@ -730,7 +730,7 @@ function loadPreferences() {
       const instantRenderToggle = document.getElementById('instantRenderToggle');
       instantRenderToggle.classList.toggle('active', instantRender);
       instantRenderToggle.setAttribute('aria-checked', instantRender.toString());
-      instantRenderToggle.textContent = instantRender ? 'Disable Instant Render' : 'Enable Instant Render';
+      updateButtonText(instantRenderToggle, instantRender ? 'Disable Instant Render' : 'Enable Instant Render');
     }
   };
 
@@ -767,7 +767,7 @@ function loadPreferences() {
       const spiralAnimationToggle = document.getElementById('spiralAnimationToggle');
       spiralAnimationToggle.classList.toggle('active', animateSpiralCoeff);
       spiralAnimationToggle.setAttribute('aria-checked', animateSpiralCoeff.toString());
-      spiralAnimationToggle.textContent = animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient';
+      updateButtonText(spiralAnimationToggle, animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient');
 
       // Show/hide controls based on saved state
       const controls = document.getElementById('spiralAnimationControls');
@@ -1158,7 +1158,7 @@ const sidebarToggle = document.getElementById('sidebarToggle')
 
 sidebarToggle.addEventListener('click', () => {
   const isCollapsed = sidebar.classList.toggle('collapsed')
-  sidebarToggle.textContent = isCollapsed ? '☰' : '✕'
+  updateButtonText(sidebarToggle, isCollapsed ? '☰' : '✕')
   sidebarToggle.setAttribute('aria-expanded', (!isCollapsed).toString())
   savePreference('sidebarCollapsed', isCollapsed)
 })
@@ -1169,7 +1169,11 @@ primeToggle.addEventListener('click', () => {
   showPrimes = !showPrimes
   primeToggle.classList.toggle('active', showPrimes)
   primeToggle.setAttribute('aria-checked', showPrimes.toString())
-  primeToggle.textContent = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers'
+
+  // Preserve tooltip elements when updating text
+  const newText = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers'
+  updateButtonText(primeToggle, newText)
+
   savePreference('showPrimes', showPrimes)
 })
 
@@ -1179,7 +1183,11 @@ clusterToggle.addEventListener('click', () => {
   showClusters = !showClusters
   clusterToggle.classList.toggle('active', showClusters)
   clusterToggle.setAttribute('aria-checked', showClusters.toString())
-  clusterToggle.textContent = showClusters ? 'Stop Animation' : 'Start Animation'
+
+  // Preserve tooltip elements when updating text
+  const newText = showClusters ? 'Stop Animation' : 'Start Animation'
+  updateButtonText(clusterToggle, newText)
+
   savePreference('showClusters', showClusters)
 })
 
@@ -1189,7 +1197,11 @@ rotationToggle.addEventListener('click', () => {
   showRotation = !showRotation
   rotationToggle.classList.toggle('active', showRotation)
   rotationToggle.setAttribute('aria-checked', showRotation.toString())
-  rotationToggle.textContent = showRotation ? 'Stop Rotation' : 'Start Rotation'
+
+  // Preserve tooltip elements when updating text
+  const newText = showRotation ? 'Stop Rotation' : 'Start Rotation'
+  updateButtonText(rotationToggle, newText)
+
   savePreference('showRotation', showRotation)
   // Recompute points when rotation state changes to adjust clipping bounds
   computePoints()
@@ -1201,7 +1213,11 @@ shapeToggle.addEventListener('click', () => {
   useSquares = !useSquares
   shapeToggle.classList.toggle('active', useSquares)
   shapeToggle.setAttribute('aria-checked', useSquares.toString())
-  shapeToggle.textContent = useSquares ? 'Use Circles' : 'Use Squares'
+
+  // Preserve tooltip elements when updating text
+  const newText = useSquares ? 'Use Circles' : 'Use Squares'
+  updateButtonText(shapeToggle, newText)
+
   savePreference('useSquares', useSquares)
 })
 
@@ -1211,7 +1227,11 @@ instantRenderToggle.addEventListener('click', () => {
   instantRender = !instantRender
   instantRenderToggle.classList.toggle('active', instantRender)
   instantRenderToggle.setAttribute('aria-checked', instantRender.toString())
-  instantRenderToggle.textContent = instantRender ? 'Disable Instant Render' : 'Enable Instant Render'
+
+  // Preserve tooltip elements when updating text
+  const newText = instantRender ? 'Disable Instant Render' : 'Enable Instant Render'
+  updateButtonText(instantRenderToggle, newText)
+
   savePreference('instantRender', instantRender)
 })
 
@@ -1277,7 +1297,7 @@ spiralAnimationToggle.addEventListener('click', () => {
   animateSpiralCoeff = !animateSpiralCoeff;
   spiralAnimationToggle.classList.toggle('active', animateSpiralCoeff);
   spiralAnimationToggle.setAttribute('aria-checked', animateSpiralCoeff.toString());
-  spiralAnimationToggle.textContent = animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient';
+  updateButtonText(spiralAnimationToggle, animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient');
 
   // Show/hide the animation controls
   const controls = document.getElementById('spiralAnimationControls');
@@ -1876,6 +1896,47 @@ if (window.__TAURI__) {
 // Tooltip System
 let tooltipsEnabled = true;
 
+// Helper function to update button text while preserving tooltip elements
+function updateButtonText(button, newText) {
+  // Find tooltip elements
+  const tooltip = button.querySelector('.tooltip');
+  const tooltipIcon = button.querySelector('.tooltip-icon');
+
+  // Store references to tooltip elements
+  const tooltipElements = [];
+  if (tooltip) tooltipElements.push(tooltip);
+  if (tooltipIcon) tooltipElements.push(tooltipIcon);
+
+  // Remove tooltip elements temporarily
+  tooltipElements.forEach(el => el.remove());
+
+  // Update the text content
+  button.textContent = newText;
+
+  // Re-add tooltip elements
+  tooltipElements.forEach(el => button.appendChild(el));
+}
+
+// Global function to close all tooltips
+function closeAllTooltips() {
+  const allTooltips = document.querySelectorAll('.tooltip.show');
+  allTooltips.forEach(tooltip => {
+    tooltip.classList.remove('show');
+  });
+
+  // Clear any existing timeouts
+  document.querySelectorAll('.tooltip-icon').forEach(icon => {
+    if (icon._tapTimeout) {
+      clearTimeout(icon._tapTimeout);
+      icon._tapTimeout = null;
+    }
+  });
+}
+
+// Global tap handler to close all tooltips when tapping anywhere
+document.addEventListener('click', closeAllTooltips);
+document.addEventListener('touchend', closeAllTooltips);
+
 function createTooltip(element, text) {
   if (!text) return;
 
@@ -1895,6 +1956,8 @@ function createTooltip(element, text) {
   function positionTooltip() {
     if (!tooltipsEnabled) return;
 
+    console.log('Positioning tooltip for:', text); // Debug log
+
     const rect = element.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
@@ -1903,59 +1966,82 @@ function createTooltip(element, text) {
     // Reset classes
     tooltip.className = 'tooltip';
 
-    // Determine best position
-    if (rect.top > tooltipRect.height + 10) {
-      tooltip.classList.add('top');
-    } else if (rect.bottom + tooltipRect.height + 10 < viewportHeight) {
+    // For mobile, prefer bottom position for better visibility
+    const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+    if (isMobile) {
+      // On mobile, always position at bottom for consistency
       tooltip.classList.add('bottom');
-    } else if (rect.left > tooltipRect.width + 10) {
-      tooltip.classList.add('left');
     } else {
-      tooltip.classList.add('right');
+      // Desktop positioning logic
+      if (rect.top > tooltipRect.height + 10) {
+        tooltip.classList.add('top');
+      } else if (rect.bottom + tooltipRect.height + 10 < viewportHeight) {
+        tooltip.classList.add('bottom');
+      } else if (rect.left > tooltipRect.width + 10) {
+        tooltip.classList.add('left');
+      } else {
+        tooltip.classList.add('right');
+      }
     }
+
+    console.log('Tooltip positioned with class:', tooltip.className); // Debug log
   }
 
-  // Mobile tap handling
+  // Mobile tap handling - Use both click and touchend for better mobile support
   let tapTimeout;
-  icon.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+
+  function showTooltip() {
     if (!tooltipsEnabled) return;
 
-    console.log('Tooltip icon clicked for:', text); // Debug log
+    console.log('Showing tooltip for:', text); // Debug log
+
+    // First close all other tooltips
+    closeAllTooltips();
 
     positionTooltip();
     tooltip.classList.add('show');
 
-    // Clear existing timeout
+    // Clear existing timeout for this tooltip
     if (tapTimeout) {
       clearTimeout(tapTimeout);
     }
 
-    // Auto-hide after 3 seconds
+    // Store timeout reference on the icon for global cleanup
+    icon._tapTimeout = tapTimeout;
+
+    // Auto-hide after 4 seconds (longer for mobile)
     tapTimeout = setTimeout(() => {
       tooltip.classList.remove('show');
-    }, 3000);
+      icon._tapTimeout = null;
+    }, 4000);
+  }
+
+  // Add both touch and click events for better mobile support
+  icon.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+  });
+
+  icon.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    showTooltip();
+  });
+
+  icon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    showTooltip();
   });
 
   // Prevent button clicks from interfering with tooltip display
   if (element.classList.contains('toggle-button')) {
     element.addEventListener('click', (e) => {
-      // Don't interfere with the button's normal function
-      // But also don't hide the tooltip
+      // Allow the button's normal function but prevent hiding tooltips
       e.stopPropagation();
     });
   }
-
-  // Hide tooltip when tapping elsewhere
-  document.addEventListener('click', (e) => {
-    if (!element.contains(e.target)) {
-      tooltip.classList.remove('show');
-      if (tapTimeout) {
-        clearTimeout(tapTimeout);
-      }
-    }
-  });
 
   // Desktop hover handling
   let hoverTimeout;
@@ -1963,6 +2049,8 @@ function createTooltip(element, text) {
     if (!tooltipsEnabled) return;
 
     hoverTimeout = setTimeout(() => {
+      // Close all other tooltips first
+      closeAllTooltips();
       positionTooltip();
       tooltip.classList.add('show');
     }, 500);
@@ -1980,10 +2068,17 @@ function initTooltips() {
   // Find all elements with data-tooltip attribute
   const elementsWithTooltips = document.querySelectorAll('[data-tooltip]');
 
-  elementsWithTooltips.forEach(element => {
+  console.log('Initializing tooltips for', elementsWithTooltips.length, 'elements'); // Debug log
+
+  elementsWithTooltips.forEach((element, index) => {
     const tooltipText = element.getAttribute('data-tooltip');
+    console.log(`Creating tooltip ${index + 1}:`, tooltipText); // Debug log
     createTooltip(element, tooltipText);
   });
+
+  // Test mobile detection
+  const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  console.log('Mobile device detected:', isMobile); // Debug log
 }
 
 function updateTooltipVisibility() {
@@ -1994,9 +2089,7 @@ function updateTooltipVisibility() {
   } else {
     body.classList.add('tooltips-disabled');
     // Hide any currently shown tooltips
-    document.querySelectorAll('.tooltip.show').forEach(tooltip => {
-      tooltip.classList.remove('show');
-    });
+    closeAllTooltips();
   }
 }
 
