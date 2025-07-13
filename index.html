@@ -47,7 +47,7 @@
 
   <div class="sidebar flex flex-col justify-between min-h-screen" id="sidebar" role="complementary" aria-label="Spiral visualization controls">
     <div>
-      <div class="sidebar-title">Spiral Controls</div>
+      <div class="sidebar-title">Spiral<br> Controls</div>
 
       <button id="primeToggle" class="toggle-button active"
               role="switch" aria-checked="true"
@@ -98,6 +98,41 @@
                  aria-describedby="spiralNumber">
           <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
                  aria-label="Spiral coefficient numeric input">
+
+          <!-- Spiral Animation Controls (initially hidden) -->
+          <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
+            <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
+              <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
+              <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
+                    aria-describedby="spiralAnimationSpeedNumber">
+              <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
+                    aria-label="Animation speed in milliseconds">
+            </div>
+
+            <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
+              <label for="spiralAnimationIncrementSlider">Increment Amount</label>
+              <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
+                    aria-describedby="spiralAnimationIncrementNumber">
+              <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
+                    aria-label="Animation increment amount">
+            </div>
+
+            <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMinSlider">Minimum Range</label>
+              <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
+                    aria-describedby="spiralAnimationMinNumber">
+              <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
+                    aria-label="Animation minimum range">
+            </div>
+
+            <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMaxSlider">Maximum Range</label>
+              <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
+                    aria-describedby="spiralAnimationMaxNumber">
+              <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
+                    aria-label="Animation maximum range">
+            </div>
+          </div>
         </div>
 
         <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
@@ -138,41 +173,6 @@
                  aria-describedby="primeSizeNumber">
           <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="10" step="0.1"
                  aria-label="Prime number size multiplier numeric input">
-        </div>
-
-        <!-- Spiral Animation Controls (initially hidden) -->
-        <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
-          <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
-            <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
-            <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
-                   aria-describedby="spiralAnimationSpeedNumber">
-            <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
-                   aria-label="Animation speed in milliseconds">
-          </div>
-
-          <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
-            <label for="spiralAnimationIncrementSlider">Increment Amount</label>
-            <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
-                   aria-describedby="spiralAnimationIncrementNumber">
-            <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
-                   aria-label="Animation increment amount">
-          </div>
-
-          <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
-            <label for="spiralAnimationMinSlider">Minimum Range</label>
-            <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
-                   aria-describedby="spiralAnimationMinNumber">
-            <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
-                   aria-label="Animation minimum range">
-          </div>
-
-          <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
-            <label for="spiralAnimationMaxSlider">Maximum Range</label>
-            <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
-                   aria-describedby="spiralAnimationMaxNumber">
-            <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
-                   aria-label="Animation maximum range">
-          </div>
         </div>
       </div>
     </div>
@@ -226,12 +226,14 @@
           <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo">
         </div>
 
-        <div class="about-modal-text">
+        <div class="about-modal-text text-gray-50">
           <p>An interactive visualization of the Sacks spiral, a mathematical construct that reveals fascinating patterns in prime number distribution.</p>
 
           <p>This tool allows you to explore prime clusters, adjust spiral coefficients, and discover the hidden beauty in number theory through dynamic animation and real-time interaction.</p>
 
           <p>Built with modern web technologies to make mathematical exploration accessible and engaging for everyone.</p>
+
+          <p>Created by artist Ian McKenzie in a series of "Digital Toys" that he's been producing. Find out more about Ian at <a href="https://www.relentlesscurious.com" target="_blank" rel="noopener noreferrer" class="underline text-emerald-200 hover:border-b-1 border-emerald-200">relentlesscurious.com</a></a></p>
         </div>
 
         <div class="about-modal-cta">

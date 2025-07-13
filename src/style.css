@@ -37,8 +37,8 @@ body   {
 
 .sidebar-toggle {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 10px;
+  left: 175px;
   z-index: 1001;
   background: rgba(33, 33, 33, 0.9);
   border: 2px solid #333;
@@ -214,9 +214,11 @@ body   {
 
 .sidebar-title {
   font-family: monospace;
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 20px;
   font-weight: bold;
   margin-bottom: 20px;
+  margin-right: 50px;
   text-align: center;
   border-bottom: 2px solid #333;
   padding-bottom: 10px;
@@ -250,8 +252,8 @@ body   {
 
 .fullscreen-toggle {
   position: fixed;
-  top: 70px;
-  left: 20px;
+  top: 10px;
+  left: 225px;
   z-index: 1001;
   background: rgba(33, 33, 33, 0.9);
   border: 2px solid #333;

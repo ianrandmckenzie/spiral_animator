@@ -1242,9 +1242,42 @@ const sidebarToggle = document.getElementById('sidebarToggle')
 
 sidebarToggle.addEventListener('click', () => {
   const isCollapsed = sidebar.classList.toggle('collapsed')
+  const fullscreenToggle = document.getElementById('fullscreenToggle')
   updateButtonText(sidebarToggle, isCollapsed ? '☰' : '✕')
   sidebarToggle.setAttribute('aria-expanded', (!isCollapsed).toString())
   savePreference('sidebarCollapsed', isCollapsed)
+
+  // On larger screens, completely hide sidebar and toggle button when collapsed
+  if (window.innerWidth >= 768) {
+    if (isCollapsed) {
+      // Completely hide sidebar and toggle button
+      sidebar.style.display = 'none'
+      sidebarToggle.style.display = 'none'
+      fullscreenToggle.style.display = 'none'
+
+      // Show toast notification
+      const toast = document.getElementById('fullscreenToast')
+      toast.textContent = getMobileMessage('Sidebar hidden - Press S to reopen')
+      toast.classList.add('show')
+
+      // Clear existing timeout
+      if (toastTimeout) {
+        clearTimeout(toastTimeout)
+      }
+
+      // Hide toast after 3 seconds
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show')
+        // Reset toast text to default
+        toast.textContent = getMobileMessage('Press ESC to exit fullscreen')
+      }, 3000)
+    } else {
+      // Show sidebar and toggle button
+      sidebar.style.display = 'flex'
+      sidebarToggle.style.display = 'flex'
+      fullscreenToggle.style.display = 'flex'
+    }
+  }
 })
 
 // Prime toggle functionality
@@ -1887,7 +1920,21 @@ document.addEventListener('keydown', (e) => {
   // S key to toggle sidebar
   if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault()
-    sidebarToggle.click()
+
+    // Handle case where sidebar is completely hidden on larger screens
+    if (window.innerWidth >= 768 && sidebar.style.display === 'none') {
+      // Manually restore sidebar and toggle button
+      sidebar.style.display = 'flex'
+      sidebarToggle.style.display = 'flex'
+      fullscreenToggle.style.display = 'flex'
+      sidebar.classList.remove('collapsed')
+      updateButtonText(sidebarToggle, '✕')
+      sidebarToggle.setAttribute('aria-expanded', 'true')
+      savePreference('sidebarCollapsed', false)
+    } else {
+      // Use normal toggle button click
+      sidebarToggle.click()
+    }
   }
 
   // P key to toggle primes
