@@ -666,3 +666,154 @@ summary:hover {
     display: none !important;
   }
 }
+
+/* About Modal Styles */
+.about-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.about-modal.show {
+  display: flex;
+  opacity: 1;
+}
+
+.about-modal-content {
+  background: rgba(33, 33, 33, 0.95);
+  border: 2px solid #00cc00;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.about-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #00cc00;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.about-modal-close:hover,
+.about-modal-close:focus {
+  color: #00ff00;
+  transform: scale(1.1);
+}
+
+.about-modal-title {
+  color: #00ff00;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 20px 0;
+  font-family: monospace;
+  text-align: center;
+}
+
+.about-modal-body {
+  color: #cccccc;
+  line-height: 1.6;
+}
+
+.about-modal-image {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  border: 2px solid #00cc00;
+}
+
+.about-modal-text {
+  margin-bottom: 25px;
+}
+
+.about-modal-text p {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+}
+
+.about-modal-text p:last-child {
+  margin-bottom: 0;
+}
+
+.about-modal-cta {
+  text-align: center;
+}
+
+.about-cta-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #00cc00, #00ff00);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.about-cta-button:hover,
+.about-cta-button:focus {
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 204, 0, 0.3);
+}
+
+/* Mobile responsiveness for modal */
+@media (max-width: 640px) {
+  .about-modal-content {
+    padding: 20px;
+    margin: 20px;
+    max-height: 90vh;
+  }
+
+  .about-modal-title {
+    font-size: 20px;
+  }
+
+  .about-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .about-modal-text p {
+    font-size: 13px;
+  }
+}

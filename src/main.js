@@ -2203,12 +2203,76 @@ function initTooltipToggle() {
   }
 }
 
+// About Modal functionality
+function initAboutModal() {
+  const aboutLink = document.getElementById('aboutLink');
+  const aboutModal = document.getElementById('aboutModal');
+  const aboutModalClose = document.getElementById('aboutModalClose');
+
+  if (!aboutLink || !aboutModal || !aboutModalClose) {
+    return;
+  }
+
+  // Open modal
+  function openModal() {
+    aboutModal.classList.add('show');
+    aboutModal.setAttribute('aria-hidden', 'false');
+    // Focus the close button for accessibility
+    aboutModalClose.focus();
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Close modal
+  function closeModal() {
+    aboutModal.classList.remove('show');
+    aboutModal.setAttribute('aria-hidden', 'true');
+    // Restore body scroll
+    document.body.style.overflow = 'hidden'; // Keep hidden since this is the main app style
+    // Return focus to the about link
+    aboutLink.focus();
+  }
+
+  // Event listeners
+  aboutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    openModal();
+  });
+
+  aboutModalClose.addEventListener('click', closeModal);
+
+  // Close modal when clicking outside content
+  aboutModal.addEventListener('click', (e) => {
+    if (e.target === aboutModal) {
+      closeModal();
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aboutModal.classList.contains('show')) {
+      e.stopPropagation(); // Prevent other escape handlers
+      closeModal();
+    }
+  });
+
+  // Close modal when global closeAllTooltips is called (for consistency)
+  const originalCloseAllTooltips = closeAllTooltips;
+  window.closeAllTooltips = function() {
+    originalCloseAllTooltips();
+    if (aboutModal.classList.contains('show')) {
+      closeModal();
+    }
+  };
+}
+
 initDB()
 resize()
 requestAnimationFrame(drawFrame)
 
-// Initialize tooltips after DOM is ready
+// Initialize tooltips and about modal after DOM is ready
 setTimeout(() => {
   initTooltips();
   initTooltipToggle();
+  initAboutModal();
 }, 100);
