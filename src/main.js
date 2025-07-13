@@ -32,14 +32,14 @@ let showClusters = true
 let showRotation = true
 let rotationSpeed = 0.1
 let currentRotation = 0
-let useSquares = true
+let useSquares = false
 let dotSize = 0.1
 let primeSize = 10.0
 let isFullscreen = false
 let wasFullscreenBefore = false // Track if window was fullscreen before entering current fullscreen session
 let menuVisible = true // Track menu visibility state
 let interfaceVisibleInFullscreen = false // Track if interface is currently visible while in fullscreen
-let instantRender = false
+let instantRender = true
 
 // Spiral coefficient animation settings
 let animateSpiralCoeff = false

@@ -567,6 +567,16 @@ summary:hover {
   transform: scale(1.1);
 }
 
+/* Specific styling for slow computer options */
+.slow-computer-options {
+  margin-bottom: 1rem;
+}
+
+.slow-computer-options summary {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
 /* Show info icons on mobile/touch devices */
 @media (hover: none) and (pointer: coarse) {
   .tooltip-icon {
