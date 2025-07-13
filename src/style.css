@@ -69,7 +69,7 @@ body   {
 }
 
 .toggle-button {
-  width: 100%;
+  width: 89%;
   background: rgba(33, 33, 33, 0.9);
   border: 2px solid #333;
   border-radius: 8px;
@@ -80,6 +80,7 @@ body   {
   transition: all 0.3s ease;
   margin-bottom: 15px;
   display: block;
+  position: relative;
 }
 
 .toggle-button:hover {
@@ -423,4 +424,188 @@ summary:hover {
   text-decoration: none !important;
   font-weight: bold !important;
   z-index: 9999 !important;
+}
+
+/* Tooltip System */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.95);
+  color: #00ff00;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  width: 250px;
+  word-wrap: break-word;
+  z-index: 2000;
+  border: 1px solid #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+}
+
+.tooltip.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Tooltip positioning */
+.tooltip.top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+}
+
+.tooltip.bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+}
+
+.tooltip.left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+}
+
+.tooltip.right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+}
+
+/* Tooltip arrows */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.tooltip.top::after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-color: rgba(0, 0, 0, 0.95) transparent transparent transparent;
+}
+
+.tooltip.bottom::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent rgba(0, 0, 0, 0.95) transparent;
+}
+
+.tooltip.left::after {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-color: transparent transparent transparent rgba(0, 0, 0, 0.95);
+}
+
+.tooltip.right::after {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 6px 6px 0;
+  border-color: transparent rgba(0, 0, 0, 0.95) transparent transparent;
+}
+
+/* Mobile info icon */
+.tooltip-icon {
+  display: none;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 255, 0, 0.9);
+  color: #000;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 20px;
+  cursor: pointer;
+  z-index: 1001;
+  user-select: none;
+  transition: all 0.2s ease;
+  border: 1px solid #000;
+}
+
+/* Position for toggle buttons - outside the button on the right */
+.toggle-button .tooltip-icon {
+  top: 10px;
+  right: -30px;
+}
+
+/* Position for control groups - top right corner */
+.control-group .tooltip-icon {
+  top: 5px;
+  right: 5px;
+}
+
+.tooltip-icon:hover {
+  background: rgba(0, 255, 0, 1);
+  transform: scale(1.1);
+}
+
+/* Show info icons on mobile/touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .tooltip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Make sure there's enough space for the icon on toggle buttons */
+  .toggle-button {
+    margin-right: 35px;
+  }
+
+  /* Hide hover effects on touch devices */
+  .control-group:hover .tooltip,
+  .toggle-button:hover .tooltip {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Desktop hover effects */
+@media (hover: hover) and (pointer: fine) {
+  .control-group:hover .tooltip,
+  .toggle-button:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0.5s;
+  }
+}
+
+/* Ensure tooltips are positioned relative to their containers */
+.control-group,
+.toggle-button {
+  position: relative;
+}
+
+/* Hide tooltips when disabled */
+.tooltips-disabled .tooltip {
+  display: none !important;
+}
+
+.tooltips-disabled .tooltip-icon {
+  display: none !important;
 }

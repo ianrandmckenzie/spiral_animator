@@ -50,6 +50,11 @@ let spiralAnimationMax = 500
 let spiralAnimationDirection = 1 // 1 for incrementing, -1 for decrementing
 let spiralAnimationInterval = null
 
+// Cursor auto-hide functionality for fullscreen
+let cursorTimeout = null
+let cursorHidden = false
+const CURSOR_HIDE_DELAY = 2000 // 2 seconds
+
 // cluster settings
 let clusterCount = 100
 const clusterRadius = 200
@@ -58,6 +63,37 @@ const liftHeight    = 10
 const trailAlpha    = 0.25
 
 const clusters = []
+
+// Cursor auto-hide functionality
+function hideCursor() {
+  if (isFullscreen && !cursorHidden) {
+    document.body.style.cursor = 'none'
+    cursorHidden = true
+  }
+}
+
+function showCursor() {
+  if (cursorHidden) {
+    document.body.style.cursor = 'auto'
+    cursorHidden = false
+  }
+}
+
+function resetCursorTimer() {
+  // Clear existing timer
+  if (cursorTimeout) {
+    clearTimeout(cursorTimeout)
+  }
+
+  // Only start timer if in fullscreen
+  if (isFullscreen) {
+    // Show cursor immediately
+    showCursor()
+
+    // Set new timer to hide cursor after delay
+    cursorTimeout = setTimeout(hideCursor, CURSOR_HIDE_DELAY)
+  }
+}
 
 // Fullscreen functionality
 let toastTimeout = null
@@ -101,9 +137,19 @@ async function enterFullscreen() {
       console.error('Failed to enter fullscreen:', error)
     }
   }
+
+  // Start cursor auto-hide timer when entering fullscreen
+  resetCursorTimer()
 }
 
 async function exitFullscreen() {
+  // Stop cursor auto-hide when exiting fullscreen
+  if (cursorTimeout) {
+    clearTimeout(cursorTimeout)
+    cursorTimeout = null
+  }
+  showCursor()
+
   // Check if we're in Tauri environment
   if (window.__TAURI__) {
     try {
@@ -171,6 +217,13 @@ async function showInterfaceInFullscreen() {
   sidebarToggle.style.display = 'flex'
   fullscreenToggle.style.display = 'flex'
 
+  // Show cursor when interface is shown and stop auto-hide
+  if (cursorTimeout) {
+    clearTimeout(cursorTimeout)
+    cursorTimeout = null
+  }
+  showCursor()
+
   // Show informative toast
   const toast = document.getElementById('fullscreenToast')
   toast.textContent = 'Interface restored - Use macOS fullscreen controls to exit, or ESC to hide interface'
@@ -200,6 +253,9 @@ function hideInterfaceInFullscreen() {
   sidebar.style.display = 'none'
   sidebarToggle.style.display = 'none'
   fullscreenToggle.style.display = 'none'
+
+  // Restart cursor auto-hide when interface is hidden
+  resetCursorTimer()
 
   // Show informative toast
   const toast = document.getElementById('fullscreenToast')
@@ -309,6 +365,11 @@ function updateFullscreenState() {
     sidebarToggle.style.display = 'none'
     fullscreenToggle.style.display = 'none'
 
+    // Start cursor auto-hide timer when entering fullscreen
+    if (!wasFullscreen) {
+      resetCursorTimer()
+    }
+
     // Show toast when entering fullscreen
     if (!wasFullscreen) {
       const toast = document.getElementById('fullscreenToast')
@@ -326,6 +387,15 @@ function updateFullscreenState() {
     fullscreenToggle.style.display = 'flex'
     fullscreenToggle.textContent = '⛶'
     fullscreenToggle.title = 'Toggle Fullscreen'
+
+    // Stop cursor auto-hide and show cursor when exiting fullscreen
+    if (wasFullscreen) {
+      if (cursorTimeout) {
+        clearTimeout(cursorTimeout)
+        cursorTimeout = null
+      }
+      showCursor()
+    }
 
     // Hide toast when exiting fullscreen
     const toast = document.getElementById('fullscreenToast')
@@ -1624,6 +1694,8 @@ primeSizeNumber.addEventListener('input', (e) => {
 
 // Keyboard navigation support for accessibility
 document.addEventListener('keydown', (e) => {
+  // Reset cursor timer for any key activity
+  resetCursorTimer()
 
   // Don't handle shortcuts if user is typing in input fields
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
@@ -1745,11 +1817,16 @@ document.addEventListener('keydown', (e) => {
   }
 
   // M key to toggle spiral coefficient animation
-  if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+  if (e.key === 'm' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault()
     spiralAnimationToggle.click()
   }
 })
+
+// Add mouse move listener for cursor auto-hide functionality
+document.addEventListener('mousemove', resetCursorTimer)
+document.addEventListener('click', resetCursorTimer)
+document.addEventListener('mousedown', resetCursorTimer)
 
 window.addEventListener('resize', resize)
 
@@ -1796,6 +1873,165 @@ if (window.__TAURI__) {
   console.log('Debug commands available: debugSaveWindowState(), debugLoadWindowState()');
 }
 
+// Tooltip System
+let tooltipsEnabled = true;
+
+function createTooltip(element, text) {
+  if (!text) return;
+
+  // Create tooltip element
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip bottom';
+  tooltip.textContent = text;
+  element.appendChild(tooltip);
+
+  // Create mobile info icon
+  const icon = document.createElement('div');
+  icon.className = 'tooltip-icon';
+  icon.textContent = 'i';
+  element.appendChild(icon);
+
+  // Position tooltip based on available space
+  function positionTooltip() {
+    if (!tooltipsEnabled) return;
+
+    const rect = element.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // Reset classes
+    tooltip.className = 'tooltip';
+
+    // Determine best position
+    if (rect.top > tooltipRect.height + 10) {
+      tooltip.classList.add('top');
+    } else if (rect.bottom + tooltipRect.height + 10 < viewportHeight) {
+      tooltip.classList.add('bottom');
+    } else if (rect.left > tooltipRect.width + 10) {
+      tooltip.classList.add('left');
+    } else {
+      tooltip.classList.add('right');
+    }
+  }
+
+  // Mobile tap handling
+  let tapTimeout;
+  icon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!tooltipsEnabled) return;
+
+    console.log('Tooltip icon clicked for:', text); // Debug log
+
+    positionTooltip();
+    tooltip.classList.add('show');
+
+    // Clear existing timeout
+    if (tapTimeout) {
+      clearTimeout(tapTimeout);
+    }
+
+    // Auto-hide after 3 seconds
+    tapTimeout = setTimeout(() => {
+      tooltip.classList.remove('show');
+    }, 3000);
+  });
+
+  // Prevent button clicks from interfering with tooltip display
+  if (element.classList.contains('toggle-button')) {
+    element.addEventListener('click', (e) => {
+      // Don't interfere with the button's normal function
+      // But also don't hide the tooltip
+      e.stopPropagation();
+    });
+  }
+
+  // Hide tooltip when tapping elsewhere
+  document.addEventListener('click', (e) => {
+    if (!element.contains(e.target)) {
+      tooltip.classList.remove('show');
+      if (tapTimeout) {
+        clearTimeout(tapTimeout);
+      }
+    }
+  });
+
+  // Desktop hover handling
+  let hoverTimeout;
+  element.addEventListener('mouseenter', () => {
+    if (!tooltipsEnabled) return;
+
+    hoverTimeout = setTimeout(() => {
+      positionTooltip();
+      tooltip.classList.add('show');
+    }, 500);
+  });
+
+  element.addEventListener('mouseleave', () => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+    }
+    tooltip.classList.remove('show');
+  });
+}
+
+function initTooltips() {
+  // Find all elements with data-tooltip attribute
+  const elementsWithTooltips = document.querySelectorAll('[data-tooltip]');
+
+  elementsWithTooltips.forEach(element => {
+    const tooltipText = element.getAttribute('data-tooltip');
+    createTooltip(element, tooltipText);
+  });
+}
+
+function updateTooltipVisibility() {
+  const body = document.body;
+
+  if (tooltipsEnabled) {
+    body.classList.remove('tooltips-disabled');
+  } else {
+    body.classList.add('tooltips-disabled');
+    // Hide any currently shown tooltips
+    document.querySelectorAll('.tooltip.show').forEach(tooltip => {
+      tooltip.classList.remove('show');
+    });
+  }
+}
+
+// Initialize tooltip toggle
+function initTooltipToggle() {
+  const disableTooltipsCheckbox = document.getElementById('disableTooltips');
+
+  if (disableTooltipsCheckbox) {
+    // Load saved preference
+    if (db) {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const objectStore = transaction.objectStore(STORE_NAME);
+      objectStore.get('tooltipsEnabled').onsuccess = (event) => {
+        if (event.target.result !== undefined) {
+          tooltipsEnabled = event.target.result.value;
+          disableTooltipsCheckbox.checked = !tooltipsEnabled;
+          updateTooltipVisibility();
+        }
+      };
+    }
+
+    disableTooltipsCheckbox.addEventListener('change', (e) => {
+      tooltipsEnabled = !e.target.checked;
+      updateTooltipVisibility();
+      savePreference('tooltipsEnabled', tooltipsEnabled);
+    });
+  }
+}
+
 initDB()
 resize()
 requestAnimationFrame(drawFrame)
+
+// Initialize tooltips after DOM is ready
+setTimeout(() => {
+  initTooltips();
+  initTooltipToggle();
+}, 100);
