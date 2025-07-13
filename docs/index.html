@@ -37,8 +37,8 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/assets/index-CxJC1sus.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DHhNiAu-.css">
+  <script type="module" crossorigin src="/assets/index-BniSRoSD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DxahUD6T.css">
 </head>
 <body class="bg-black text-[#00ff00]">
   <!-- Skip link for keyboard navigation -->
@@ -52,42 +52,48 @@
 
       <button id="primeToggle" class="toggle-button active"
               role="switch" aria-checked="true"
-              aria-label="Toggle prime number highlighting">
+              aria-label="Toggle prime number highlighting"
+              data-tooltip="Highlight prime numbers with increased brightness and size">
         Defocus Prime Numbers
       </button>
 
       <button id="clusterToggle" class="toggle-button cluster-toggle active"
               role="switch" aria-checked="true"
-              aria-label="Toggle cluster animation">
+              aria-label="Toggle cluster animation"
+              data-tooltip="Animate moving clusters that create dynamic lighting effects on nearby points">
         Stop Animation
       </button>
 
       <button id="rotationToggle" class="toggle-button rotation-toggle active"
               role="switch" aria-checked="true"
-              aria-label="Toggle spiral rotation">
+              aria-label="Toggle spiral rotation"
+              data-tooltip="Continuously rotate the entire spiral visualization around its center">
         Stop Rotation
       </button>
 
       <button id="shapeToggle" class="toggle-button shape-toggle active"
               role="switch" aria-checked="true"
-              aria-label="Toggle between circles and squares">
+              aria-label="Toggle between circles and squares"
+              data-tooltip="Switch between circular and square point shapes in the visualization">
         Use Circles
       </button>
 
       <button id="instantRenderToggle" class="toggle-button instant-render-toggle"
               role="switch" aria-checked="false"
-              aria-label="Toggle instant render for powerful machines">
+              aria-label="Toggle instant render for powerful machines"
+              data-tooltip="Render all points immediately instead of progressive animation for better performance">
         Enable Instant Render
       </button>
 
       <button id="spiralAnimationToggle" class="toggle-button spiral-animation-toggle"
               role="switch" aria-checked="false"
-              aria-label="Toggle spiral coefficient animation">
+              aria-label="Toggle spiral coefficient animation"
+              data-tooltip="Automatically animate the spiral coefficient between minimum and maximum values">
         Animate Spiral Coefficient
       </button>
 
       <div class="spiral-control">
-        <div class="control-group">
+        <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
           <label for="spiralSlider">Spiral Coefficient</label>
           <input type="range" id="spiralSlider" min="2" max="200" value="2" step="0.1"
                  aria-describedby="spiralNumber">
@@ -95,7 +101,7 @@
                  aria-label="Spiral coefficient numeric input">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
           <label for="maxNSlider">Max N (Point Count)</label>
           <input type="range" id="maxNSlider" min="20000" max="190000" value="5000" step="1000"
                  aria-describedby="maxNNumber">
@@ -103,7 +109,7 @@
                  aria-label="Maximum point count numeric input">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" data-tooltip="Number of animated light sources that move around and illuminate nearby points">
           <label for="clusterCountSlider">Cluster Count</label>
           <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
                  aria-describedby="clusterCountNumber">
@@ -111,7 +117,7 @@
                  aria-label="Cluster count numeric input">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" data-tooltip="How fast the spiral rotates - higher values create faster rotation">
           <label for="rotationSpeedSlider">Rotation Speed</label>
           <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="0.1" step="0.1"
                  aria-describedby="rotationSpeedNumber">
@@ -119,7 +125,7 @@
                  aria-label="Rotation speed numeric input">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" data-tooltip="Base size of all points in the visualization - affects overall visual scale">
           <label for="dotSizeSlider">Dot/Square Size</label>
           <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="0.1" step="0.1"
                  aria-describedby="dotSizeNumber">
@@ -127,7 +133,7 @@
                  aria-label="Dot or square size numeric input">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" data-tooltip="How much larger prime numbers appear compared to regular numbers">
           <label for="primeSizeSlider">Prime Size Multiplier</label>
           <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="10" step="0.1"
                  aria-describedby="primeSizeNumber">
@@ -137,7 +143,7 @@
 
         <!-- Spiral Animation Controls (initially hidden) -->
         <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
-          <div class="control-group">
+          <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
             <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
             <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
                    aria-describedby="spiralAnimationSpeedNumber">
@@ -145,7 +151,7 @@
                    aria-label="Animation speed in milliseconds">
           </div>
 
-          <div class="control-group">
+          <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
             <label for="spiralAnimationIncrementSlider">Increment Amount</label>
             <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
                    aria-describedby="spiralAnimationIncrementNumber">
@@ -153,7 +159,7 @@
                    aria-label="Animation increment amount">
           </div>
 
-          <div class="control-group">
+          <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
             <label for="spiralAnimationMinSlider">Minimum Range</label>
             <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
                    aria-describedby="spiralAnimationMinNumber">
@@ -161,7 +167,7 @@
                    aria-label="Animation minimum range">
           </div>
 
-          <div class="control-group">
+          <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
             <label for="spiralAnimationMaxSlider">Maximum Range</label>
             <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
                    aria-describedby="spiralAnimationMaxNumber">
@@ -188,8 +194,16 @@
           <div><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
           <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
           <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
         </div>
       </details>
+
+      <div class="control-group mt-4">
+        <label class="flex items-center text-sm">
+          <input type="checkbox" id="disableTooltips" class="mr-2 accent-green-500">
+          Disable Tooltips
+        </label>
+      </div>
 
       <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
     </div>
