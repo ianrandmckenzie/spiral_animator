@@ -621,3 +621,48 @@ summary:hover {
 .tooltips-disabled .tooltip-icon {
   display: none !important;
 }
+
+/* Mobile fullscreen exit button */
+.mobile-fullscreen-exit {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1002;
+  background: rgba(33, 33, 33, 0.9);
+  border: 1px solid #00cc00;
+  opacity: 0.75;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 18px;
+  color: #00cc00;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+
+.mobile-fullscreen-exit:hover,
+.mobile-fullscreen-exit:focus {
+  background: rgba(0, 204, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.mobile-fullscreen-exit:active {
+  transform: scale(0.95);
+}
+
+/* Show mobile exit button only on touch devices when in fullscreen */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-fullscreen-exit.show {
+    display: flex;
+  }
+
+  /* Hide keyboard shortcuts on mobile devices */
+  .keyboard-shortcuts {
+    display: none !important;
+  }
+}

@@ -98,6 +98,18 @@ function resetCursorTimer() {
 // Fullscreen functionality
 let toastTimeout = null
 
+// Helper function to generate mobile-friendly messages
+function getMobileMessage(desktopMessage) {
+  const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+  if (!isMobile) return desktopMessage
+
+  // Replace ESC references with mobile equivalent
+  return desktopMessage
+    .replace(/Press ESC/g, 'Tap ✕ at the top-right of this screen')
+    .replace(/ESC to/g, 'Tap ✕ at the top-right of this screen to')
+    .replace(/or ESC/g, 'or tap ✕ at the top-right of this screen')
+}
+
 function showFullscreenToast() {
   const toast = document.getElementById('fullscreenToast')
   toast.classList.add('show')
@@ -183,7 +195,7 @@ async function toggleMenuVisibility() {
 
       // Show a toast to indicate menu state change
       const toast = document.getElementById('fullscreenToast')
-      toast.textContent = menuVisible ? 'Menu restored (ESC to exit fullscreen)' : 'Menu hidden (ESC to restore menu)'
+      toast.textContent = getMobileMessage(menuVisible ? 'Menu restored (ESC to exit fullscreen)' : 'Menu hidden (ESC to restore menu)')
       toast.classList.add('show')
 
       // Clear existing timeout
@@ -195,7 +207,7 @@ async function toggleMenuVisibility() {
       toastTimeout = setTimeout(() => {
         toast.classList.remove('show')
         // Restore original toast text
-        toast.textContent = 'Press ESC to exit fullscreen'
+        toast.textContent = getMobileMessage('Press ESC to exit fullscreen')
       }, 3000)
 
     } catch (error) {
@@ -226,7 +238,7 @@ async function showInterfaceInFullscreen() {
 
   // Show informative toast
   const toast = document.getElementById('fullscreenToast')
-  toast.textContent = 'Interface restored - Use macOS fullscreen controls to exit, or ESC to hide interface'
+  toast.textContent = getMobileMessage('Interface restored - Use macOS fullscreen controls to exit, or ESC to hide interface')
   toast.classList.add('show')
 
   // Clear existing timeout
@@ -237,7 +249,7 @@ async function showInterfaceInFullscreen() {
   // Hide toast after 4 seconds (longer since it has more text)
   toastTimeout = setTimeout(() => {
     toast.classList.remove('show')
-    toast.textContent = 'Press ESC to exit fullscreen'
+    toast.textContent = getMobileMessage('Press ESC to exit fullscreen')
   }, 4000)
 }
 
@@ -259,7 +271,7 @@ function hideInterfaceInFullscreen() {
 
   // Show informative toast
   const toast = document.getElementById('fullscreenToast')
-  toast.textContent = 'Interface hidden - Press ESC to show interface'
+  toast.textContent = getMobileMessage('Interface hidden - Press ESC to show interface')
   toast.classList.add('show')
 
   // Clear existing timeout
@@ -358,12 +370,16 @@ function updateFullscreenState() {
   const sidebar = document.getElementById('sidebar')
   const sidebarToggle = document.getElementById('sidebarToggle')
   const fullscreenToggle = document.getElementById('fullscreenToggle')
+  const mobileFullscreenExit = document.getElementById('mobileFullscreenExit')
 
   if (isFullscreen) {
     // Hide all UI elements in fullscreen for screensaver experience
     sidebar.style.display = 'none'
     sidebarToggle.style.display = 'none'
     fullscreenToggle.style.display = 'none'
+
+    // Show mobile exit button on touch devices
+    mobileFullscreenExit.classList.add('show')
 
     // Start cursor auto-hide timer when entering fullscreen
     if (!wasFullscreen) {
@@ -373,10 +389,12 @@ function updateFullscreenState() {
     // Show toast when entering fullscreen
     if (!wasFullscreen) {
       const toast = document.getElementById('fullscreenToast')
+      // Check if on mobile device
+      const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches
       if (wasFullscreenBefore) {
-        toast.textContent = 'Fullscreen mode - Press ESC to toggle menu'
+        toast.textContent = isMobile ? 'Fullscreen mode - Tap ✕ at the top-right of this screen to toggle menu' : 'Fullscreen mode - Press ESC to toggle menu'
       } else {
-        toast.textContent = 'Fullscreen mode - Press ESC to exit fullscreen'
+        toast.textContent = isMobile ? 'Fullscreen mode - Tap ✕ at the top-right of this screen to exit fullscreen' : 'Fullscreen mode - Press ESC to exit fullscreen'
       }
       showFullscreenToast()
     }
@@ -387,6 +405,9 @@ function updateFullscreenState() {
     fullscreenToggle.style.display = 'flex'
     fullscreenToggle.textContent = '⛶'
     fullscreenToggle.title = 'Toggle Fullscreen'
+
+    // Hide mobile exit button
+    mobileFullscreenExit.classList.remove('show')
 
     // Stop cursor auto-hide and show cursor when exiting fullscreen
     if (wasFullscreen) {
@@ -401,7 +422,7 @@ function updateFullscreenState() {
     const toast = document.getElementById('fullscreenToast')
     toast.classList.remove('show')
     // Reset toast text to default
-    toast.textContent = 'Press ESC to exit fullscreen'
+    toast.textContent = getMobileMessage('Press ESC to exit fullscreen')
   }
 }
 
@@ -1139,6 +1160,69 @@ sidebarElement.addEventListener('wheel', e => {
 // Fullscreen toggle functionality
 const fullscreenToggle = document.getElementById('fullscreenToggle')
 fullscreenToggle.addEventListener('click', toggleFullscreen)
+
+// Mobile fullscreen exit button functionality
+const mobileFullscreenExit = document.getElementById('mobileFullscreenExit')
+mobileFullscreenExit.addEventListener('click', () => {
+  // Same logic as ESC key for exiting fullscreen
+  if (isFullscreen) {
+    if (window.__TAURI__) {
+      if (wasFullscreenBefore) {
+        // Window was fullscreen before, toggle interface visibility instead of exiting fullscreen
+        if (interfaceVisibleInFullscreen) {
+          hideInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = false
+        } else {
+          showInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = true
+        }
+      } else {
+        // Window was not fullscreen before, exit fullscreen
+        isFullscreen = false
+        wasFullscreenBefore = false
+        menuVisible = true
+        interfaceVisibleInFullscreen = false
+        exitFullscreen()
+        updateFullscreenState()
+        savePreference('isFullscreen', isFullscreen)
+        setTimeout(() => {
+          saveWindowState()
+        }, 500)
+      }
+    } else {
+      // Browser behavior
+      if (wasFullscreenBefore) {
+        // In browser, show interface if hidden, hide if shown
+        if (interfaceVisibleInFullscreen) {
+          hideInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = false
+        } else {
+          showInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = true
+        }
+      } else {
+        isFullscreen = false
+        exitFullscreen()
+        updateFullscreenState()
+        wasFullscreenBefore = false
+        interfaceVisibleInFullscreen = false
+        setTimeout(() => {
+          saveWindowState()
+        }, 500)
+      }
+    }
+  }
+})
+
+// Add touch event handling for better mobile support
+mobileFullscreenExit.addEventListener('touchstart', (e) => {
+  e.preventDefault()
+})
+
+mobileFullscreenExit.addEventListener('touchend', (e) => {
+  e.preventDefault()
+  mobileFullscreenExit.click()
+})
 
 // Listen for fullscreen changes
 document.addEventListener('fullscreenchange', updateFullscreenState)
