@@ -41,6 +41,15 @@ let menuVisible = true // Track menu visibility state
 let interfaceVisibleInFullscreen = false // Track if interface is currently visible while in fullscreen
 let instantRender = false
 
+// Spiral coefficient animation settings
+let animateSpiralCoeff = false
+let spiralAnimationSpeed = 100 // milliseconds
+let spiralAnimationIncrement = 0.1
+let spiralAnimationMin = 1
+let spiralAnimationMax = 500
+let spiralAnimationDirection = 1 // 1 for incrementing, -1 for decrementing
+let spiralAnimationInterval = null
+
 // cluster settings
 let clusterCount = 100
 const clusterRadius = 200
@@ -668,6 +677,61 @@ function loadPreferences() {
       computePoints();
     }
   };
+
+  // Load spiral animation preference
+  objectStore.get('animateSpiralCoeff').onsuccess = (event) => {
+    if (event.target.result !== undefined) {
+      animateSpiralCoeff = event.target.result.value;
+      const spiralAnimationToggle = document.getElementById('spiralAnimationToggle');
+      spiralAnimationToggle.classList.toggle('active', animateSpiralCoeff);
+      spiralAnimationToggle.setAttribute('aria-checked', animateSpiralCoeff.toString());
+      spiralAnimationToggle.textContent = animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient';
+
+      // Show/hide controls based on saved state
+      const controls = document.getElementById('spiralAnimationControls');
+      controls.style.display = animateSpiralCoeff ? 'block' : 'none';
+
+      if (animateSpiralCoeff) {
+        startSpiralCoeffAnimation();
+      }
+    }
+  };
+
+  // Load spiral animation speed
+  objectStore.get('spiralAnimationSpeed').onsuccess = (event) => {
+    if (event.target.result) {
+      spiralAnimationSpeed = event.target.result.value;
+      document.getElementById('spiralAnimationSpeedSlider').value = spiralAnimationSpeed;
+      document.getElementById('spiralAnimationSpeedNumber').value = spiralAnimationSpeed;
+    }
+  };
+
+  // Load spiral animation increment
+  objectStore.get('spiralAnimationIncrement').onsuccess = (event) => {
+    if (event.target.result) {
+      spiralAnimationIncrement = event.target.result.value;
+      document.getElementById('spiralAnimationIncrementSlider').value = spiralAnimationIncrement;
+      document.getElementById('spiralAnimationIncrementNumber').value = spiralAnimationIncrement;
+    }
+  };
+
+  // Load spiral animation min
+  objectStore.get('spiralAnimationMin').onsuccess = (event) => {
+    if (event.target.result) {
+      spiralAnimationMin = event.target.result.value;
+      document.getElementById('spiralAnimationMinSlider').value = spiralAnimationMin;
+      document.getElementById('spiralAnimationMinNumber').value = spiralAnimationMin;
+    }
+  };
+
+  // Load spiral animation max
+  objectStore.get('spiralAnimationMax').onsuccess = (event) => {
+    if (event.target.result) {
+      spiralAnimationMax = event.target.result.value;
+      document.getElementById('spiralAnimationMaxSlider').value = spiralAnimationMax;
+      document.getElementById('spiralAnimationMaxNumber').value = spiralAnimationMax;
+    }
+  };
 }
 
 // Prime number checking function with memoization
@@ -943,7 +1007,7 @@ function randomizeRGB() {
 }
 
 // scroll-to-zoom with debouncing
-function clamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
+// function clamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
 const debouncedSaveScale = debounce((scale) => savePreference('scale', scale), 200);
 
 window.addEventListener('wheel', e => {
@@ -1044,6 +1108,253 @@ instantRenderToggle.addEventListener('click', () => {
   instantRenderToggle.textContent = instantRender ? 'Disable Instant Render' : 'Enable Instant Render'
   savePreference('instantRender', instantRender)
 })
+
+// Spiral coefficient animation logic
+function startSpiralCoeffAnimation() {
+  if (spiralAnimationInterval) return; // Already animating
+
+  spiralAnimationInterval = setInterval(() => {
+    spiralCoeff += spiralAnimationIncrement * spiralAnimationDirection;
+
+    // Reverse direction if out of bounds
+    if (spiralCoeff <= spiralAnimationMin || spiralCoeff >= spiralAnimationMax) {
+      spiralAnimationDirection *= -1;
+    }
+
+    // Update UI
+    document.getElementById('spiralSlider').value = spiralCoeff;
+    document.getElementById('spiralNumber').value = spiralCoeff;
+
+    // Save preference
+    savePreference('spiralCoeff', spiralCoeff);
+
+    // Recompute points
+    computePoints();
+  }, spiralAnimationSpeed);
+}
+
+function stopSpiralCoeffAnimation() {
+  if (spiralAnimationInterval) {
+    clearInterval(spiralAnimationInterval);
+    spiralAnimationInterval = null;
+  }
+}
+
+// Toggle spiral coefficient animation
+const spiralAnimationToggle = document.getElementById('spiralAnimationToggle');
+spiralAnimationToggle.addEventListener('click', () => {
+  animateSpiralCoeff = !animateSpiralCoeff;
+  spiralAnimationToggle.classList.toggle('active', animateSpiralCoeff);
+  spiralAnimationToggle.setAttribute('aria-checked', animateSpiralCoeff.toString());
+  spiralAnimationToggle.textContent = animateSpiralCoeff ? 'Stop Spiral Animation' : 'Animate Spiral Coefficient';
+
+  // Show/hide the animation controls
+  const controls = document.getElementById('spiralAnimationControls');
+  controls.style.display = animateSpiralCoeff ? 'block' : 'none';
+
+  if (animateSpiralCoeff) {
+    startSpiralCoeffAnimation();
+  } else {
+    stopSpiralCoeffAnimation();
+  }
+
+  savePreference('animateSpiralCoeff', animateSpiralCoeff);
+});
+
+// Update spiral coefficient animation speed
+const spiralAnimationSpeedSlider = document.getElementById('spiralAnimationSpeedSlider');
+const spiralAnimationSpeedNumber = document.getElementById('spiralAnimationSpeedNumber');
+
+spiralAnimationSpeedSlider.addEventListener('input', (e) => {
+  spiralAnimationSpeed = parseInt(e.target.value);
+  spiralAnimationSpeedNumber.value = spiralAnimationSpeed;
+  savePreference('spiralAnimationSpeed', spiralAnimationSpeed);
+
+  // Restart animation with new speed
+  if (animateSpiralCoeff) {
+    stopSpiralCoeffAnimation();
+    startSpiralCoeffAnimation();
+  }
+});
+
+spiralAnimationSpeedNumber.addEventListener('input', (e) => {
+  const value = parseInt(e.target.value);
+  if (value >= 50 && value <= 500 && !isNaN(value)) {
+    spiralAnimationSpeed = value;
+    // Only update slider if value is within slider range
+    if (value >= 100 && value <= 500) {
+      spiralAnimationSpeedSlider.value = spiralAnimationSpeed;
+    }
+    savePreference('spiralAnimationSpeed', spiralAnimationSpeed);
+
+    // Restart animation with new speed
+    if (animateSpiralCoeff) {
+      stopSpiralCoeffAnimation();
+      startSpiralCoeffAnimation();
+    }
+  }
+});
+
+// Spiral animation increment controls
+const spiralAnimationIncrementSlider = document.getElementById('spiralAnimationIncrementSlider');
+const spiralAnimationIncrementNumber = document.getElementById('spiralAnimationIncrementNumber');
+
+spiralAnimationIncrementSlider.addEventListener('input', (e) => {
+  spiralAnimationIncrement = parseFloat(e.target.value);
+  spiralAnimationIncrementNumber.value = spiralAnimationIncrement;
+  savePreference('spiralAnimationIncrement', spiralAnimationIncrement);
+});
+
+spiralAnimationIncrementNumber.addEventListener('input', (e) => {
+  const value = parseFloat(e.target.value);
+  if (value >= 0.01 && value <= 10.0 && !isNaN(value)) {
+    spiralAnimationIncrement = value;
+    // Only update slider if value is within slider range
+    if (value >= 0.01 && value <= 2.0) {
+      spiralAnimationIncrementSlider.value = spiralAnimationIncrement;
+    }
+    savePreference('spiralAnimationIncrement', spiralAnimationIncrement);
+  }
+});
+
+// Spiral animation min range controls
+const spiralAnimationMinSlider = document.getElementById('spiralAnimationMinSlider');
+const spiralAnimationMinNumber = document.getElementById('spiralAnimationMinNumber');
+
+spiralAnimationMinSlider.addEventListener('input', (e) => {
+  spiralAnimationMin = parseFloat(e.target.value);
+  spiralAnimationMinNumber.value = spiralAnimationMin;
+  savePreference('spiralAnimationMin', spiralAnimationMin);
+
+  // Ensure min is less than max
+  if (spiralAnimationMin >= spiralAnimationMax) {
+    spiralAnimationMax = spiralAnimationMin + 10;
+    document.getElementById('spiralAnimationMaxSlider').value = spiralAnimationMax;
+    document.getElementById('spiralAnimationMaxNumber').value = spiralAnimationMax;
+    savePreference('spiralAnimationMax', spiralAnimationMax);
+  }
+});
+
+spiralAnimationMinNumber.addEventListener('input', (e) => {
+  const value = parseFloat(e.target.value);
+  if (value >= 0.1 && value <= 1000 && !isNaN(value)) {
+    spiralAnimationMin = value;
+    // Only update slider if value is within slider range
+    if (value >= 0.1 && value <= 100) {
+      spiralAnimationMinSlider.value = spiralAnimationMin;
+    }
+    savePreference('spiralAnimationMin', spiralAnimationMin);
+
+    // Ensure min is less than max
+    if (spiralAnimationMin >= spiralAnimationMax) {
+      spiralAnimationMax = spiralAnimationMin + 10;
+      document.getElementById('spiralAnimationMaxSlider').value = spiralAnimationMax;
+      document.getElementById('spiralAnimationMaxNumber').value = spiralAnimationMax;
+      savePreference('spiralAnimationMax', spiralAnimationMax);
+    }
+  }
+});
+
+// Spiral animation max range controls
+const spiralAnimationMaxSlider = document.getElementById('spiralAnimationMaxSlider');
+const spiralAnimationMaxNumber = document.getElementById('spiralAnimationMaxNumber');
+
+spiralAnimationMaxSlider.addEventListener('input', (e) => {
+  spiralAnimationMax = parseFloat(e.target.value);
+  spiralAnimationMaxNumber.value = spiralAnimationMax;
+  savePreference('spiralAnimationMax', spiralAnimationMax);
+
+  // Ensure max is greater than min
+  if (spiralAnimationMax <= spiralAnimationMin) {
+    spiralAnimationMin = Math.max(0.1, spiralAnimationMax - 10);
+    document.getElementById('spiralAnimationMinSlider').value = spiralAnimationMin;
+    document.getElementById('spiralAnimationMinNumber').value = spiralAnimationMin;
+    savePreference('spiralAnimationMin', spiralAnimationMin);
+  }
+});
+
+spiralAnimationMaxNumber.addEventListener('input', (e) => {
+  const value = parseFloat(e.target.value);
+  if (value >= 10 && value <= 2000 && !isNaN(value)) {
+    spiralAnimationMax = value;
+    // Only update slider if value is within slider range
+    if (value >= 10 && value <= 1000) {
+      spiralAnimationMaxSlider.value = spiralAnimationMax;
+    }
+    savePreference('spiralAnimationMax', spiralAnimationMax);
+
+    // Ensure max is greater than min
+    if (spiralAnimationMax <= spiralAnimationMin) {
+      spiralAnimationMin = Math.max(0.1, spiralAnimationMax - 10);
+      document.getElementById('spiralAnimationMinSlider').value = spiralAnimationMin;
+      document.getElementById('spiralAnimationMinNumber').value = spiralAnimationMin;
+      savePreference('spiralAnimationMin', spiralAnimationMin);
+    }
+  }
+});
+
+// Clamp function for value mapping
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Map range function
+function mapRange(value, inMin, inMax, outMin, outMax) {
+  return outMin + (outMax - outMin) * clamp((value - inMin) / (inMax - inMin), 0, 1);
+}
+
+// Update spiral coefficient bounds based on UI inputs
+function updateSpiralCoeffBounds() {
+  const minInput = document.getElementById('spiralAnimationMinNumber');
+  const maxInput = document.getElementById('spiralAnimationMaxNumber');
+
+  spiralAnimationMin = parseFloat(minInput.value);
+  spiralAnimationMax = parseFloat(maxInput.value);
+
+  // Clamp current spiralCoeff to new bounds
+  spiralCoeff = clamp(spiralCoeff, spiralAnimationMin, spiralAnimationMax);
+
+  // Update UI
+  document.getElementById('spiralSlider').value = spiralCoeff;
+  document.getElementById('spiralNumber').value = spiralCoeff;
+
+  // Save preferences
+  savePreference('spiralCoeff', spiralCoeff);
+  savePreference('spiralAnimationMin', spiralAnimationMin);
+  savePreference('spiralAnimationMax', spiralAnimationMax);
+}
+
+// Initialize spiral coefficient bounds from preferences
+function initSpiralCoeffBounds() {
+  const minInput = document.getElementById('spiralAnimationMinNumber');
+  const maxInput = document.getElementById('spiralAnimationMaxNumber');
+
+  // Load from preferences or use defaults
+  minInput.value = spiralAnimationMin = parseFloat(getPreference('spiralAnimationMin', 1));
+  maxInput.value = spiralAnimationMax = parseFloat(getPreference('spiralAnimationMax', 500));
+
+  // Update UI
+  updateSpiralCoeffBounds();
+}
+
+// Load preference helper function
+function getPreference(key, defaultValue) {
+  if (!db) return defaultValue;
+
+  const transaction = db.transaction([STORE_NAME], 'readonly');
+  const objectStore = transaction.objectStore(STORE_NAME);
+
+  return new Promise((resolve) => {
+    const request = objectStore.get(key);
+    request.onsuccess = () => resolve(request.result?.value || defaultValue);
+    request.onerror = () => resolve(defaultValue);
+  });
+}
+
+// On load, initialize spiral coefficient bounds from preferences
+window.addEventListener('load', () => {
+  initSpiralCoeffBounds();
+});
 
 // Debounce function to reduce excessive computations
 function debounce(func, wait) {
