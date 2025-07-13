@@ -36,6 +36,9 @@ let useSquares = true
 let dotSize = 0.1
 let primeSize = 10.0
 let isFullscreen = false
+let wasFullscreenBefore = false // Track if window was fullscreen before entering current fullscreen session
+let menuVisible = true // Track menu visibility state
+let interfaceVisibleInFullscreen = false // Track if interface is currently visible while in fullscreen
 let instantRender = false
 
 // cluster settings
@@ -75,7 +78,19 @@ async function enterFullscreen() {
       console.error('Failed to enter fullscreen:', error)
     }
   } else {
-    return;
+    // Browser fullscreen API
+    const element = document.documentElement
+    try {
+      if (element.requestFullscreen) {
+        await element.requestFullscreen()
+      } else if (element.webkitRequestFullscreen) {
+        await element.webkitRequestFullscreen()
+      } else if (element.msRequestFullscreen) {
+        await element.msRequestFullscreen()
+      }
+    } catch (error) {
+      console.error('Failed to enter fullscreen:', error)
+    }
   }
 }
 
@@ -89,29 +104,175 @@ async function exitFullscreen() {
       console.error('Failed to exit fullscreen:', error)
     }
   } else {
-    return;
+    // Browser fullscreen API
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen()
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen()
+      }
+    } catch (error) {
+      console.error('Failed to exit fullscreen:', error)
+    }
   }
+}
+
+async function toggleMenuVisibility() {
+  // Check if we're in Tauri environment
+  if (window.__TAURI__) {
+    try {
+      menuVisible = !menuVisible
+      console.log('Menu visibility toggled:', menuVisible ? 'visible' : 'hidden')
+
+      // Show a toast to indicate menu state change
+      const toast = document.getElementById('fullscreenToast')
+      toast.textContent = menuVisible ? 'Menu restored (ESC to exit fullscreen)' : 'Menu hidden (ESC to restore menu)'
+      toast.classList.add('show')
+
+      // Clear existing timeout
+      if (toastTimeout) {
+        clearTimeout(toastTimeout)
+      }
+
+      // Hide toast after 3 seconds
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show')
+        // Restore original toast text
+        toast.textContent = 'Press ESC to exit fullscreen'
+      }, 3000)
+
+    } catch (error) {
+      console.error('Failed to toggle menu visibility:', error)
+    }
+  }
+}
+
+async function showInterfaceInFullscreen() {
+  // When in fullscreen mode but wanting to show interface (for users who were already fullscreen)
+  console.log('Showing interface in fullscreen mode')
+
+  // Force show the interface elements temporarily
+  const sidebar = document.getElementById('sidebar')
+  const sidebarToggle = document.getElementById('sidebarToggle')
+  const fullscreenToggle = document.getElementById('fullscreenToggle')
+
+  sidebar.style.display = 'flex'
+  sidebarToggle.style.display = 'flex'
+  fullscreenToggle.style.display = 'flex'
+
+  // Show informative toast
+  const toast = document.getElementById('fullscreenToast')
+  toast.textContent = 'Interface restored - Use macOS fullscreen controls to exit, or ESC to hide interface'
+  toast.classList.add('show')
+
+  // Clear existing timeout
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
+
+  // Hide toast after 4 seconds (longer since it has more text)
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show')
+    toast.textContent = 'Press ESC to exit fullscreen'
+  }, 4000)
+}
+
+function hideInterfaceInFullscreen() {
+  // When in fullscreen mode and wanting to hide interface again
+  console.log('Hiding interface in fullscreen mode')
+
+  // Hide the interface elements
+  const sidebar = document.getElementById('sidebar')
+  const sidebarToggle = document.getElementById('sidebarToggle')
+  const fullscreenToggle = document.getElementById('fullscreenToggle')
+
+  sidebar.style.display = 'none'
+  sidebarToggle.style.display = 'none'
+  fullscreenToggle.style.display = 'none'
+
+  // Show informative toast
+  const toast = document.getElementById('fullscreenToast')
+  toast.textContent = 'Interface hidden - Press ESC to show interface'
+  toast.classList.add('show')
+
+  // Clear existing timeout
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
+
+  // Hide toast after 3 seconds
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show')
+  }, 3000)
 }
 
 async function toggleFullscreen() {
   if (window.__TAURI__) {
-    // For Tauri, we need to manually track the state
-    isFullscreen = !isFullscreen
     if (isFullscreen) {
-      await enterFullscreen()
+      // We're currently in fullscreen, check if we should exit or just toggle interface
+      if (wasFullscreenBefore) {
+        // Window was fullscreen before entering current fullscreen session
+        // Just toggle interface visibility instead of exiting fullscreen
+        console.log('Toggling interface visibility instead of exiting fullscreen (was fullscreen before)')
+        if (interfaceVisibleInFullscreen) {
+          hideInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = false
+        } else {
+          showInterfaceInFullscreen()
+          interfaceVisibleInFullscreen = true
+        }
+      } else {
+        // Window was not fullscreen before, so actually exit fullscreen
+        console.log('Exiting fullscreen (was not fullscreen before)')
+        isFullscreen = false
+        wasFullscreenBefore = false
+        menuVisible = true // Reset menu state when exiting fullscreen
+        interfaceVisibleInFullscreen = false // Reset interface visibility state
+        await exitFullscreen()
+        // Update UI immediately for Tauri
+        updateFullscreenState()
+        // Save fullscreen state
+        savePreference('isFullscreen', isFullscreen)
+        // Save window state after a short delay to capture correct windowed dimensions
+        setTimeout(() => {
+          saveWindowState()
+        }, 500)
+      }
     } else {
-      await exitFullscreen()
+      // We're not in fullscreen, so enter fullscreen
+      // First, record the current fullscreen state as "before" state
+      console.log('Entering fullscreen (was fullscreen before:', isFullscreen, ')')
+      wasFullscreenBefore = isFullscreen
+      isFullscreen = true
+      menuVisible = true // Reset menu visibility when entering fullscreen
+      interfaceVisibleInFullscreen = false // Start with interface hidden in fullscreen
+      await enterFullscreen()
+      // Update UI immediately for Tauri
+      updateFullscreenState()
+      // Save fullscreen state
+      savePreference('isFullscreen', isFullscreen)
     }
-    // Update UI immediately for Tauri
-    updateFullscreenState()
-    // Save fullscreen state
-    savePreference('isFullscreen', isFullscreen)
   } else {
     // Browser fullscreen - state will be updated by event listeners
     if (!isFullscreen) {
+      wasFullscreenBefore = isFullscreen
       await enterFullscreen()
     } else {
-      await exitFullscreen()
+      if (wasFullscreenBefore) {
+        // In browser, we can't toggle menu visibility, so just show a toast
+        showFullscreenToast()
+        return
+      } else {
+        await exitFullscreen()
+        wasFullscreenBefore = false
+        interfaceVisibleInFullscreen = false
+        // Save window state after a short delay to capture correct windowed dimensions
+        setTimeout(() => {
+          saveWindowState()
+        }, 500)
+      }
     }
   }
 }
@@ -141,6 +302,12 @@ function updateFullscreenState() {
 
     // Show toast when entering fullscreen
     if (!wasFullscreen) {
+      const toast = document.getElementById('fullscreenToast')
+      if (wasFullscreenBefore) {
+        toast.textContent = 'Fullscreen mode - Press ESC to toggle menu'
+      } else {
+        toast.textContent = 'Fullscreen mode - Press ESC to exit fullscreen'
+      }
       showFullscreenToast()
     }
   } else {
@@ -152,7 +319,10 @@ function updateFullscreenState() {
     fullscreenToggle.title = 'Toggle Fullscreen'
 
     // Hide toast when exiting fullscreen
-    document.getElementById('fullscreenToast').classList.remove('show')
+    const toast = document.getElementById('fullscreenToast')
+    toast.classList.remove('show')
+    // Reset toast text to default
+    toast.textContent = 'Press ESC to exit fullscreen'
   }
 }
 
@@ -204,17 +374,24 @@ async function saveWindowState() {
     const position = await currentWindow.innerPosition();
     const isMaximized = await currentWindow.isMaximized();
 
-    // Save window dimensions and position
-    savePreference('windowWidth', size.width);
-    savePreference('windowHeight', size.height);
-    savePreference('windowX', position.x);
-    savePreference('windowY', position.y);
-    savePreference('windowMaximized', isMaximized);
+    // Don't save window dimensions when in fullscreen mode to prevent
+    // ultra-wide window issues when exiting fullscreen
+    if (!isFullscreen) {
+      // Save window dimensions and position only when not in fullscreen
+      savePreference('windowWidth', size.width);
+      savePreference('windowHeight', size.height);
+      savePreference('windowX', position.x);
+      savePreference('windowY', position.y);
+      savePreference('windowMaximized', isMaximized);
 
-    // Save fullscreen state
+      console.log('Window state saved:', { width: size.width, height: size.height, fullscreen: isFullscreen });
+    } else {
+      console.log('Skipping window size save (in fullscreen mode)');
+    }
+
+    // Always save fullscreen state regardless
     savePreference('isFullscreen', isFullscreen);
 
-    console.log('Window state saved:', { width: size.width, height: size.height, fullscreen: isFullscreen });
   } catch (error) {
     console.error('Failed to save window state:', error);
   }
@@ -259,11 +436,22 @@ async function loadWindowState() {
 
     // Apply window size if saved
     if (width && height && width > 200 && height > 200) {
-      try {
-        await currentWindow.setSize(new window.__TAURI__.window.LogicalSize(width, height));
-        console.log('✅ Window size restored:', width, 'x', height);
-      } catch (error) {
-        console.error('❌ Failed to restore window size:', error);
+      // Add additional validation to prevent ultra-wide windows
+      const maxReasonableWidth = 3840; // 4K width
+      const maxReasonableHeight = 2160; // 4K height
+
+      if (width <= maxReasonableWidth && height <= maxReasonableHeight) {
+        try {
+          await currentWindow.setSize(new window.__TAURI__.window.LogicalSize(width, height));
+          console.log('✅ Window size restored:', width, 'x', height);
+        } catch (error) {
+          console.error('❌ Failed to restore window size:', error);
+        }
+      } else {
+        console.log('❌ Saved window size too large, skipping restore:', width, 'x', height);
+        // Clear the invalid saved dimensions
+        savePreference('windowWidth', null);
+        savePreference('windowHeight', null);
       }
     } else {
       console.log('❌ No valid window size to restore');
@@ -300,20 +488,28 @@ async function loadWindowState() {
           const shouldRestoreFullscreen = false; // Change to true when you want fullscreen restored
 
           if (shouldRestoreFullscreen) {
-            isFullscreen = true;
+            // When restoring fullscreen, mark it as "was fullscreen before"
+            wasFullscreenBefore = true
+            isFullscreen = true
+            menuVisible = true
+            interfaceVisibleInFullscreen = false // Start with interface hidden
             await currentWindow.setFullscreen(true);
             updateFullscreenState();
-            console.log('✅ Fullscreen state restored');
+            console.log('✅ Fullscreen state restored (marked as was fullscreen before)');
           } else {
             console.log('⏭️  Skipping fullscreen restoration (disabled for development)');
             // Clear the saved fullscreen state so it doesn't keep trying
-            isFullscreen = false;
+            isFullscreen = false
+            wasFullscreenBefore = false
+            interfaceVisibleInFullscreen = false
             savePreference('isFullscreen', false);
           }
         } catch (error) {
           console.error('❌ Failed to restore fullscreen state:', error);
           // If fullscreen restoration fails, clear the saved state
-          isFullscreen = false;
+          isFullscreen = false
+          wasFullscreenBefore = false
+          interfaceVisibleInFullscreen = false
           savePreference('isFullscreen', false);
         }
       }, 300);
@@ -1047,12 +1243,55 @@ document.addEventListener('keydown', (e) => {
   // ESC key to exit fullscreen or close sidebar
   if (e.key === 'Escape') {
     if (isFullscreen) {
-      isFullscreen = false;
-      exitFullscreen();
-      updateFullscreenState();
-      // Save fullscreen state when exiting with ESC
+      // Use the same logic as toggleFullscreen for ESC key
       if (window.__TAURI__) {
-        savePreference('isFullscreen', isFullscreen);
+        if (wasFullscreenBefore) {
+          // Window was fullscreen before, toggle interface visibility instead of exiting fullscreen
+          console.log('ESC: Toggling interface visibility in fullscreen (was fullscreen before)')
+          if (interfaceVisibleInFullscreen) {
+            hideInterfaceInFullscreen()
+            interfaceVisibleInFullscreen = false
+          } else {
+            showInterfaceInFullscreen()
+            interfaceVisibleInFullscreen = true
+          }
+        } else {
+          // Window was not fullscreen before, exit fullscreen
+          console.log('ESC: Exiting fullscreen')
+          isFullscreen = false
+          wasFullscreenBefore = false
+          menuVisible = true
+          interfaceVisibleInFullscreen = false
+          exitFullscreen()
+          updateFullscreenState()
+          savePreference('isFullscreen', isFullscreen)
+          // Save window state after a short delay to capture correct windowed dimensions
+          setTimeout(() => {
+            saveWindowState()
+          }, 500)
+        }
+      } else {
+        // Browser behavior
+        if (wasFullscreenBefore) {
+          // In browser, show interface if hidden, hide if shown
+          if (interfaceVisibleInFullscreen) {
+            hideInterfaceInFullscreen()
+            interfaceVisibleInFullscreen = false
+          } else {
+            showInterfaceInFullscreen()
+            interfaceVisibleInFullscreen = true
+          }
+        } else {
+          isFullscreen = false
+          exitFullscreen()
+          updateFullscreenState()
+          wasFullscreenBefore = false
+          interfaceVisibleInFullscreen = false
+          // Save window state after a short delay to capture correct windowed dimensions
+          setTimeout(() => {
+            saveWindowState()
+          }, 500)
+        }
       }
     } else if (!sidebar.classList.contains('collapsed')) {
       sidebarToggle.click()
@@ -1062,7 +1301,21 @@ document.addEventListener('keydown', (e) => {
   // F11 or F key to toggle fullscreen
   if (e.key === 'F11' || (e.key === 'f' && !e.ctrlKey && !e.metaKey)) {
     e.preventDefault()
-    toggleFullscreen()
+
+    // If in fullscreen and was fullscreen before, toggle interface instead
+    if (isFullscreen && wasFullscreenBefore) {
+      console.log('F key: Toggling interface visibility in fullscreen (was fullscreen before)')
+      if (interfaceVisibleInFullscreen) {
+        hideInterfaceInFullscreen()
+        interfaceVisibleInFullscreen = false
+      } else {
+        showInterfaceInFullscreen()
+        interfaceVisibleInFullscreen = true
+      }
+    } else {
+      // Normal fullscreen toggle behavior
+      toggleFullscreen()
+    }
   }
 
   // S key to toggle sidebar
