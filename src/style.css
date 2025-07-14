@@ -595,9 +595,15 @@ summary:hover {
     margin-right: 35px;
   }
 
-  /* Hide hover effects on touch devices */
-  .control-group:hover .tooltip,
-  .toggle-button:hover .tooltip {
+  /* Hide hover effects on touch devices - More specific selectors */
+  .control-group:hover > .tooltip,
+  .toggle-button:hover > .tooltip {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* Also hide nested tooltips on touch devices */
+  .control-group:hover .tooltip {
     opacity: 0;
     visibility: hidden;
   }
@@ -609,13 +615,21 @@ summary:hover {
   }
 }
 
-/* Desktop hover effects */
+/* Desktop hover effects - JavaScript controlled only for better control */
 @media (hover: hover) and (pointer: fine) {
-  .control-group:hover .tooltip,
-  .toggle-button:hover .tooltip {
+  /* Disable CSS hover effects - tooltips are controlled by JavaScript */
+  .control-group .tooltip,
+  .toggle-button .tooltip {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  /* Only show tooltips when JavaScript explicitly adds the 'show' class */
+  .control-group .tooltip.show,
+  .toggle-button .tooltip.show {
     opacity: 1;
     visibility: visible;
-    transition-delay: 0.5s;
   }
 }
 

@@ -2176,8 +2176,11 @@ function createTooltip(element, text) {
 
   // Desktop hover handling
   let hoverTimeout;
-  element.addEventListener('mouseenter', () => {
+  element.addEventListener('mouseenter', (e) => {
     if (!tooltipsEnabled) return;
+
+    // Stop event propagation to prevent parent hover effects
+    e.stopPropagation();
 
     hoverTimeout = setTimeout(() => {
       // Close all other tooltips first
@@ -2187,7 +2190,10 @@ function createTooltip(element, text) {
     }, 500);
   });
 
-  element.addEventListener('mouseleave', () => {
+  element.addEventListener('mouseleave', (e) => {
+    // Stop event propagation
+    e.stopPropagation();
+
     if (hoverTimeout) {
       clearTimeout(hoverTimeout);
     }
