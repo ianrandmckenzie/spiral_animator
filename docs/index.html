@@ -37,8 +37,8 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/assets/index-BniSRoSD.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DxahUD6T.css">
+  <script type="module" crossorigin src="/assets/index-CgqmJ8_q.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BQGVElLA.css">
 </head>
 <body class="bg-black text-[#00ff00]">
   <!-- Skip link for keyboard navigation -->
@@ -48,20 +48,13 @@
 
   <div class="sidebar flex flex-col justify-between min-h-screen" id="sidebar" role="complementary" aria-label="Spiral visualization controls">
     <div>
-      <div class="sidebar-title">Spiral Controls</div>
+      <div class="sidebar-title">Spiral<br> Controls</div>
 
       <button id="primeToggle" class="toggle-button active"
               role="switch" aria-checked="true"
               aria-label="Toggle prime number highlighting"
               data-tooltip="Highlight prime numbers with increased brightness and size">
         Defocus Prime Numbers
-      </button>
-
-      <button id="clusterToggle" class="toggle-button cluster-toggle active"
-              role="switch" aria-checked="true"
-              aria-label="Toggle cluster animation"
-              data-tooltip="Animate moving clusters that create dynamic lighting effects on nearby points">
-        Stop Animation
       </button>
 
       <button id="rotationToggle" class="toggle-button rotation-toggle active"
@@ -71,19 +64,7 @@
         Stop Rotation
       </button>
 
-      <button id="shapeToggle" class="toggle-button shape-toggle active"
-              role="switch" aria-checked="true"
-              aria-label="Toggle between circles and squares"
-              data-tooltip="Switch between circular and square point shapes in the visualization">
-        Use Circles
-      </button>
 
-      <button id="instantRenderToggle" class="toggle-button instant-render-toggle"
-              role="switch" aria-checked="false"
-              aria-label="Toggle instant render for powerful machines"
-              data-tooltip="Render all points immediately instead of progressive animation for better performance">
-        Enable Instant Render
-      </button>
 
       <button id="spiralAnimationToggle" class="toggle-button spiral-animation-toggle"
               role="switch" aria-checked="false"
@@ -92,6 +73,43 @@
         Animate Spiral Coefficient
       </button>
 
+      <!-- Options for Slow Devices Section -->
+      <details class="slow-computer-options">
+        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2 font-semibold">
+          Options for Slow Devices
+        </summary>
+        <div class="ml-2 space-y-2">
+          <button id="shapeToggle" class="toggle-button shape-toggle"
+                  role="switch" aria-checked="false"
+                  aria-label="Toggle between circles and squares"
+                  data-tooltip="Switch between circular and square point shapes in the visualization">
+            Use Squares
+          </button>
+
+          <button id="instantRenderToggle" class="toggle-button instant-render-toggle active"
+                  role="switch" aria-checked="true"
+                  aria-label="Toggle instant render for powerful machines"
+                  data-tooltip="Render all points immediately instead of progressive animation for better performance">
+            Disable Instant Render
+          </button>
+
+          <button id="clusterToggle" class="toggle-button cluster-toggle active"
+                  role="switch" aria-checked="true"
+                  aria-label="Toggle cluster animation"
+                  data-tooltip="Animate moving clusters that create dynamic lighting effects on nearby points">
+            Stop Animation
+          </button>
+
+          <div class="control-group" data-tooltip="Number of animated light sources that move around and illuminate nearby points">
+            <label for="clusterCountSlider">Cluster Count</label>
+            <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
+                   aria-describedby="clusterCountNumber">
+            <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10"
+                   aria-label="Cluster count numeric input">
+          </div>
+        </div>
+      </details>
+
       <div class="spiral-control">
         <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
           <label for="spiralSlider">Spiral Coefficient</label>
@@ -99,6 +117,41 @@
                  aria-describedby="spiralNumber">
           <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
                  aria-label="Spiral coefficient numeric input">
+
+          <!-- Spiral Animation Controls (initially hidden) -->
+          <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
+            <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
+              <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
+              <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
+                    aria-describedby="spiralAnimationSpeedNumber">
+              <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
+                    aria-label="Animation speed in milliseconds">
+            </div>
+
+            <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
+              <label for="spiralAnimationIncrementSlider">Increment Amount</label>
+              <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
+                    aria-describedby="spiralAnimationIncrementNumber">
+              <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
+                    aria-label="Animation increment amount">
+            </div>
+
+            <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMinSlider">Minimum Range</label>
+              <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
+                    aria-describedby="spiralAnimationMinNumber">
+              <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
+                    aria-label="Animation minimum range">
+            </div>
+
+            <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMaxSlider">Maximum Range</label>
+              <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
+                    aria-describedby="spiralAnimationMaxNumber">
+              <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
+                    aria-label="Animation maximum range">
+            </div>
+          </div>
         </div>
 
         <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
@@ -107,14 +160,6 @@
                  aria-describedby="maxNNumber">
           <input type="number" id="maxNNumber" min="0" max="1900000" value="5000" step="1000"
                  aria-label="Maximum point count numeric input">
-        </div>
-
-        <div class="control-group" data-tooltip="Number of animated light sources that move around and illuminate nearby points">
-          <label for="clusterCountSlider">Cluster Count</label>
-          <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
-                 aria-describedby="clusterCountNumber">
-          <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10"
-                 aria-label="Cluster count numeric input">
         </div>
 
         <div class="control-group" data-tooltip="How fast the spiral rotates - higher values create faster rotation">
@@ -140,48 +185,13 @@
           <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="10" step="0.1"
                  aria-label="Prime number size multiplier numeric input">
         </div>
-
-        <!-- Spiral Animation Controls (initially hidden) -->
-        <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
-          <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
-            <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
-            <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
-                   aria-describedby="spiralAnimationSpeedNumber">
-            <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
-                   aria-label="Animation speed in milliseconds">
-          </div>
-
-          <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
-            <label for="spiralAnimationIncrementSlider">Increment Amount</label>
-            <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
-                   aria-describedby="spiralAnimationIncrementNumber">
-            <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
-                   aria-label="Animation increment amount">
-          </div>
-
-          <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
-            <label for="spiralAnimationMinSlider">Minimum Range</label>
-            <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
-                   aria-describedby="spiralAnimationMinNumber">
-            <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
-                   aria-label="Animation minimum range">
-          </div>
-
-          <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
-            <label for="spiralAnimationMaxSlider">Maximum Range</label>
-            <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
-                   aria-describedby="spiralAnimationMaxNumber">
-            <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
-                   aria-label="Animation maximum range">
-          </div>
-        </div>
       </div>
     </div>
 
     <div class="mt-4">
       <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
 
-      <details class="mb-4">
+      <details class="mb-4 keyboard-shortcuts">
         <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2">
           Keyboard Shortcuts
         </summary>
@@ -206,6 +216,43 @@
       </div>
 
       <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
+
+      <div class="mt-4 pt-4 border-t border-gray-600">
+        <button id="aboutLink" class="text-sm text-[#00cc00] hover:text-[#00ff00] underline cursor-pointer">
+          About this app
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="aboutModal" class="about-modal" role="dialog" aria-labelledby="aboutTitle" aria-hidden="true">
+    <div class="about-modal-content">
+      <button class="about-modal-close" id="aboutModalClose" aria-label="Close about modal">×</button>
+
+      <h2 id="aboutTitle" class="about-modal-title">About Sacks Spiral Animator</h2>
+
+      <div class="about-modal-body">
+        <div class="about-modal-image">
+          <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo">
+        </div>
+
+        <div class="about-modal-text text-gray-50">
+          <p>An interactive visualization of the Sacks spiral, a mathematical construct that reveals fascinating patterns in prime number distribution.</p>
+
+          <p>This tool allows you to explore prime clusters, adjust spiral coefficients, and discover the hidden beauty in number theory through dynamic animation and real-time interaction.</p>
+
+          <p>Built with modern web technologies to make mathematical exploration accessible and engaging for everyone.</p>
+
+          <p>Created by artist Ian McKenzie in a series of "Digital Toys" that he's been producing. Find out more about Ian at <a href="https://www.relentlesscurious.com" target="_blank" rel="noopener noreferrer" class="underline text-emerald-200 hover:border-b-1 border-emerald-200">relentlesscurious.com</a></a></p>
+        </div>
+
+        <div class="about-modal-cta">
+          <a href="https://relentlesscurious.com" target="_blank" rel="noopener noreferrer" class="about-cta-button">
+            Visit relentlesscurious.com
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -217,6 +264,10 @@
   <button class="fullscreen-toggle" id="fullscreenToggle"
           title="Toggle Fullscreen"
           aria-label="Toggle fullscreen mode">⛶</button>
+
+  <button class="mobile-fullscreen-exit" id="mobileFullscreenExit"
+          title="Exit Fullscreen"
+          aria-label="Exit fullscreen mode">✕</button>
 
   <div class="fullscreen-toast" id="fullscreenToast" role="alert" aria-live="polite">
     Press ESC to exit fullscreen
