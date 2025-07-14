@@ -72,43 +72,6 @@
         Animate Spiral Coefficient
       </button>
 
-      <!-- Options for Slow Devices Section -->
-      <details class="slow-computer-options">
-        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2 font-semibold">
-          Options for Slow Devices
-        </summary>
-        <div class="ml-2 space-y-2">
-          <button id="shapeToggle" class="toggle-button shape-toggle"
-                  role="switch" aria-checked="false"
-                  aria-label="Toggle between circles and squares"
-                  data-tooltip="Switch between circular and square point shapes in the visualization">
-            Use Circles
-          </button>
-
-          <button id="instantRenderToggle" class="toggle-button instant-render-toggle active"
-                  role="switch" aria-checked="true"
-                  aria-label="Toggle instant render for powerful machines"
-                  data-tooltip="Render all points immediately instead of progressive animation for better performance">
-            Disable Instant Render
-          </button>
-
-          <button id="clusterToggle" class="toggle-button cluster-toggle active"
-                  role="switch" aria-checked="true"
-                  aria-label="Toggle cluster animation"
-                  data-tooltip="Animate moving clusters that create dynamic lighting effects on nearby points">
-            Stop Animation
-          </button>
-
-          <div class="control-group spiral-control" data-tooltip="Number of animated light sources that move around and illuminate nearby points">
-            <label for="clusterCountSlider">Cluster Count</label>
-            <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
-                   aria-describedby="clusterCountNumber">
-            <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10"
-                   aria-label="Cluster count numeric input">
-          </div>
-        </div>
-      </details>
-
       <div class="spiral-control">
         <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
           <label for="spiralSlider">Spiral Coefficient</label>
@@ -204,6 +167,43 @@
           <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
           <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
           <div><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
+        </div>
+      </details>
+
+      <!-- Options for Slow Devices Section -->
+      <details class="slow-computer-options">
+        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2 font-semibold">
+          Options for Slow Devices
+        </summary>
+        <div class="ml-2 space-y-2">
+          <button id="shapeToggle" class="toggle-button shape-toggle"
+                  role="switch" aria-checked="false"
+                  aria-label="Toggle between circles and squares"
+                  data-tooltip="Switch between circular and square point shapes in the visualization">
+            Use Circles
+          </button>
+
+          <button id="instantRenderToggle" class="toggle-button instant-render-toggle active"
+                  role="switch" aria-checked="true"
+                  aria-label="Toggle instant render for powerful machines"
+                  data-tooltip="Render all points immediately instead of progressive animation for better performance">
+            Disable Instant Render
+          </button>
+
+          <button id="clusterToggle" class="toggle-button cluster-toggle active"
+                  role="switch" aria-checked="true"
+                  aria-label="Toggle cluster animation"
+                  data-tooltip="Animate moving clusters that create dynamic lighting effects on nearby points">
+            Stop Animation
+          </button>
+
+          <div class="control-group spiral-control" data-tooltip="Number of animated light sources that move around and illuminate nearby points">
+            <label for="clusterCountSlider">Cluster Count</label>
+            <input type="range" id="clusterCountSlider" min="100" max="200" value="100" step="1"
+                   aria-describedby="clusterCountNumber">
+            <input type="number" id="clusterCountNumber" min="0" max="2000" value="100" step="10"
+                   aria-label="Cluster count numeric input">
+          </div>
         </div>
       </details>
 

@@ -1134,12 +1134,14 @@ function randomizeRGB() {
 }
 
 // scroll-to-zoom with debouncing
-// function clamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
+function scrollClamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
 const debouncedSaveScale = debounce((scale) => savePreference('scale', scale), 200);
 
 window.addEventListener('wheel', e => {
   e.preventDefault()
-  scale = clamp(scale * (e.deltaY>0 ? 1.05 : 0.95), 2, 200)
+  const vel = scale * (e.deltaY>0 ? 1.10 : 0.90)
+  console.log('velocity:', vel)
+  scale = scrollClamp(vel, 2, 200)
   debouncedSaveScale(scale)
 
   // Use instant computation if instant render is enabled, otherwise debounce
@@ -1828,6 +1830,10 @@ primeSizeNumber.addEventListener('input', (e) => {
     savePreference('primeSize', primeSize)
   }
 })
+
+document.getElementById('spiralCanvas').addEventListener('click', () => {
+  sidebarToggle.click();
+});
 
 // Keyboard navigation support for accessibility
 document.addEventListener('keydown', (e) => {
