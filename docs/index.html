@@ -3,20 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Interactive Sacks spiral visualization with prime number highlighting, animated clusters, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience." />
-  <meta name="keywords" content="Sacks spiral, prime numbers, mathematical visualization, number theory, interactive math, spiral patterns" />
+
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()" />
+
+  <meta name="description" content="Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience." />
+  <meta name="keywords" content="Sacks spiral, Ulam spiral, spirals, education, educational toy, prime numbers, mathematical visualization, number theory, interactive math, spiral patterns" />
   <title>Spiral Animator</title>
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="en">
 
   <link rel="icon" type="image/png" href="/assets/favicon-96x96-CAM1f32z.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-DHiK3qfR.svg" />
   <link rel="shortcut icon" href="/assets/favicon-CILJ26y6.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon-e4i2lIBx.png" />
-  <meta name="apple-mobile-web-app-title" content="Spiral Anim" />
+  <meta name="apple-mobile-web-app-title" content="Spiral Animator" />
   <link rel="manifest" href="/assets/site-CmIZDDbe.webmanifest" />
 
-  <!-- Resource hints for performance -->
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
-  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="Spiral Animator">
+    <meta property="og:description" content="Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://spiral.relentlesscurious.com">
+    <meta property="og:image" content="https://spiral.relentlesscurious.com/og-image.jpeg">
+    <meta property="og:site_name" content="Swarm Rippler">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Spiral Animator">
+    <meta name="twitter:description" content="Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience.">
+    <meta name="twitter:image" content="https://spiral.relentlesscurious.com/og-image.jpeg">
+    <meta property="twitter:domain" content="spiral.relentlesscurious.com">
+    <meta property="twitter:url" content="https://spiral.relentlesscurious.com/">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://spiral.relentlesscurious.com/">
 
   <!-- Critical CSS inlined for instant render -->
   <style>
@@ -37,8 +63,8 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/assets/index-ZlntbrmE.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-B3MesItx.css">
+  <script type="module" crossorigin src="/assets/index-DWH4-IRH.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-fFRs75Sa.css">
 </head>
 <body class="bg-black text-[#00ff00]">
   <!-- Skip link for keyboard navigation -->
@@ -72,6 +98,105 @@
               data-tooltip="Automatically animate the spiral coefficient between minimum and maximum values">
         Animate Spiral Coefficient
       </button>
+
+      <div class="spiral-control">
+        <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
+          <label for="spiralSlider">Spiral Coefficient</label>
+          <input type="range" id="spiralSlider" min="2" max="200" value="2" step="0.1"
+                 aria-describedby="spiralNumber">
+          <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
+                 aria-label="Spiral coefficient numeric input">
+
+          <!-- Spiral Animation Controls (initially hidden) -->
+          <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
+            <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
+              <label for="spiralAnimationSpeedSlider">Animation Speed</label>
+              <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
+                    aria-describedby="spiralAnimationSpeedNumber">
+              <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
+                    aria-label="Animation speed in milliseconds">
+            </div>
+
+            <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
+              <label for="spiralAnimationIncrementSlider">Increment Amount</label>
+              <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
+                    aria-describedby="spiralAnimationIncrementNumber">
+              <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
+                    aria-label="Animation increment amount">
+            </div>
+
+            <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMinSlider">Minimum Range</label>
+              <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
+                    aria-describedby="spiralAnimationMinNumber">
+              <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
+                    aria-label="Animation minimum range">
+            </div>
+
+            <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
+              <label for="spiralAnimationMaxSlider">Maximum Range</label>
+              <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
+                    aria-describedby="spiralAnimationMaxNumber">
+              <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
+                    aria-label="Animation maximum range">
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
+          <label for="maxNSlider">Number of Dots on Screen</label>
+          <input type="range" id="maxNSlider" min="500" max="190000" value="5000" step="1000"
+                 aria-describedby="maxNNumber">
+          <input type="number" id="maxNNumber" min="1" max="1900000" value="5000" step="1000"
+                 aria-label="Maximum point count numeric input">
+        </div>
+
+        <div class="control-group" data-tooltip="How fast the spiral rotates - higher values create faster rotation">
+          <label for="rotationSpeedSlider">Rotation Speed</label>
+          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="0.1" step="0.1"
+                 aria-describedby="rotationSpeedNumber">
+          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="0.1" step="0.1"
+                 aria-label="Rotation speed numeric input">
+        </div>
+
+        <div class="control-group" data-tooltip="Base size of all points in the visualization - affects overall visual scale">
+          <label for="dotSizeSlider">Dot/Square Size</label>
+          <input type="range" id="dotSizeSlider" min="0.5" max="5.0" value="0.1" step="0.1"
+                 aria-describedby="dotSizeNumber">
+          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="0.1" step="0.1"
+                 aria-label="Dot or square size numeric input">
+        </div>
+
+        <div class="control-group" data-tooltip="How much larger prime numbers appear compared to regular numbers">
+          <label for="primeSizeSlider">Prime Size Multiplier</label>
+          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="10" step="0.1"
+                 aria-describedby="primeSizeNumber">
+          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="10" step="0.1"
+                 aria-label="Prime number size multiplier numeric input">
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
+
+      <details class="mb-4 keyboard-shortcuts">
+        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2">
+          Keyboard Shortcuts
+        </summary>
+        <div class="text-xs text-[#00aa00] space-y-1">
+          <div><kbd class="bg-gray-700 px-1 rounded">ESC</kbd> Exit fullscreen / Close sidebar</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">F</kbd> Toggle fullscreen</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">S</kbd> Toggle sidebar</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">P</kbd> Toggle prime highlighting</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">A</kbd> Toggle animation</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
+          <div><kbd class="bg-gray-700 px-1 rounded">H</kbd> Show tutorial</div>
+        </div>
+      </details>
 
       <!-- Options for Slow Devices Section -->
       <details class="slow-computer-options">
@@ -110,104 +235,6 @@
         </div>
       </details>
 
-      <div class="spiral-control">
-        <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
-          <label for="spiralSlider">Spiral Coefficient</label>
-          <input type="range" id="spiralSlider" min="2" max="200" value="2" step="0.1"
-                 aria-describedby="spiralNumber">
-          <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
-                 aria-label="Spiral coefficient numeric input">
-
-          <!-- Spiral Animation Controls (initially hidden) -->
-          <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
-            <div class="control-group" data-tooltip="How fast the spiral coefficient changes - lower values create smoother animation">
-              <label for="spiralAnimationSpeedSlider">Animation Speed (ms)</label>
-              <input type="range" id="spiralAnimationSpeedSlider" min="10" max="1000" value="100" step="10"
-                    aria-describedby="spiralAnimationSpeedNumber">
-              <input type="number" id="spiralAnimationSpeedNumber" min="10" max="2000" value="100" step="10"
-                    aria-label="Animation speed in milliseconds">
-            </div>
-
-            <div class="control-group" data-tooltip="How much the spiral coefficient changes with each animation step">
-              <label for="spiralAnimationIncrementSlider">Increment Amount</label>
-              <input type="range" id="spiralAnimationIncrementSlider" min="0.01" max="2.0" value="0.1" step="0.01"
-                    aria-describedby="spiralAnimationIncrementNumber">
-              <input type="number" id="spiralAnimationIncrementNumber" min="0.01" max="10.0" value="0.1" step="0.01"
-                    aria-label="Animation increment amount">
-            </div>
-
-            <div class="control-group" data-tooltip="Lowest spiral coefficient value the animation will reach">
-              <label for="spiralAnimationMinSlider">Minimum Range</label>
-              <input type="range" id="spiralAnimationMinSlider" min="0.1" max="100" value="1" step="0.1"
-                    aria-describedby="spiralAnimationMinNumber">
-              <input type="number" id="spiralAnimationMinNumber" min="0.1" max="1000" value="1" step="0.1"
-                    aria-label="Animation minimum range">
-            </div>
-
-            <div class="control-group" data-tooltip="Highest spiral coefficient value the animation will reach">
-              <label for="spiralAnimationMaxSlider">Maximum Range</label>
-              <input type="range" id="spiralAnimationMaxSlider" min="10" max="1000" value="500" step="10"
-                    aria-describedby="spiralAnimationMaxNumber">
-              <input type="number" id="spiralAnimationMaxNumber" min="10" max="2000" value="500" step="10"
-                    aria-label="Animation maximum range">
-            </div>
-          </div>
-        </div>
-
-        <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
-          <label for="maxNSlider">Max N (Point Count)</label>
-          <input type="range" id="maxNSlider" min="20000" max="190000" value="5000" step="1000"
-                 aria-describedby="maxNNumber">
-          <input type="number" id="maxNNumber" min="0" max="1900000" value="5000" step="1000"
-                 aria-label="Maximum point count numeric input">
-        </div>
-
-        <div class="control-group" data-tooltip="How fast the spiral rotates - higher values create faster rotation">
-          <label for="rotationSpeedSlider">Rotation Speed</label>
-          <input type="range" id="rotationSpeedSlider" min="0.1" max="5.0" value="0.1" step="0.1"
-                 aria-describedby="rotationSpeedNumber">
-          <input type="number" id="rotationSpeedNumber" min="0.1" max="10.0" value="0.1" step="0.1"
-                 aria-label="Rotation speed numeric input">
-        </div>
-
-        <div class="control-group" data-tooltip="Base size of all points in the visualization - affects overall visual scale">
-          <label for="dotSizeSlider">Dot/Square Size</label>
-          <input type="range" id="dotSizeSlider" min="0.5" max="10.0" value="0.1" step="0.1"
-                 aria-describedby="dotSizeNumber">
-          <input type="number" id="dotSizeNumber" min="0.1" max="20.0" value="0.1" step="0.1"
-                 aria-label="Dot or square size numeric input">
-        </div>
-
-        <div class="control-group" data-tooltip="How much larger prime numbers appear compared to regular numbers">
-          <label for="primeSizeSlider">Prime Size Multiplier</label>
-          <input type="range" id="primeSizeSlider" min="0.5" max="5.0" value="10" step="0.1"
-                 aria-describedby="primeSizeNumber">
-          <input type="number" id="primeSizeNumber" min="0.1" max="10.0" value="10" step="0.1"
-                 aria-label="Prime number size multiplier numeric input">
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4">
-      <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
-
-      <details class="mb-4 keyboard-shortcuts">
-        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2">
-          Keyboard Shortcuts
-        </summary>
-        <div class="text-xs text-[#00aa00] space-y-1">
-          <div><kbd class="bg-gray-700 px-1 rounded">ESC</kbd> Exit fullscreen / Close sidebar</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">F</kbd> Toggle fullscreen</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">S</kbd> Toggle sidebar</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">P</kbd> Toggle prime highlighting</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">A</kbd> Toggle animation</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
-        </div>
-      </details>
-
       <div class="control-group mt-4">
         <label class="flex items-center text-sm">
           <input type="checkbox" id="disableTooltips" class="mr-2 accent-green-500">
@@ -220,6 +247,9 @@
       <div class="mt-4 pt-4 border-t border-gray-600">
         <button id="aboutLink" class="text-sm text-[#00cc00] hover:text-[#00ff00] underline cursor-pointer">
           About this app
+        </button>
+        <button id="tutorialLink" class="text-sm text-[#00cc00] hover:text-[#00ff00] underline cursor-pointer ml-4">
+          Take Tutorial
         </button>
       </div>
     </div>
@@ -234,7 +264,7 @@
 
       <div class="about-modal-body">
         <div class="about-modal-image">
-          <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo">
+          <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo" loading="lazy">
         </div>
 
         <div class="about-modal-text text-gray-50">

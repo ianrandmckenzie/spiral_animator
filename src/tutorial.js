@@ -203,37 +203,92 @@ class TutorialManager {
     this.overlay.setAttribute('aria-describedby', 'tutorial-content');
     this.overlay.setAttribute('aria-modal', 'true');
 
-    this.overlay.innerHTML = `
-      <div class="tutorial-content">
-        <div class="tutorial-header">
-          <h2 id="tutorial-title" class="tutorial-title"></h2>
-          <button class="tutorial-close" aria-label="Close tutorial">×</button>
-        </div>
+    // Create elements programmatically for better security
+    const tutorialContent = document.createElement('div');
+    tutorialContent.className = 'tutorial-content';
 
-        <div class="tutorial-body">
-          <p id="tutorial-content" class="tutorial-description"></p>
-        </div>
+    const tutorialHeader = document.createElement('div');
+    tutorialHeader.className = 'tutorial-header';
 
-        <div class="tutorial-footer">
-          <div class="tutorial-progress">
-            <div class="tutorial-progress-bar">
-              <div class="tutorial-progress-fill"></div>
-            </div>
-            <span class="tutorial-step-counter" aria-live="polite"></span>
-          </div>
+    const tutorialTitle = document.createElement('h2');
+    tutorialTitle.id = 'tutorial-title';
+    tutorialTitle.className = 'tutorial-title';
 
-          <div class="tutorial-controls">
-            <button class="tutorial-btn tutorial-skip">Skip Tutorial</button>
-            <div class="tutorial-nav">
-              <button class="tutorial-btn tutorial-prev" disabled>Previous</button>
-              <button class="tutorial-btn tutorial-next tutorial-primary">Next</button>
-            </div>
-          </div>
-        </div>
-      </div>
+    const closeButton = document.createElement('button');
+    closeButton.className = 'tutorial-close';
+    closeButton.setAttribute('aria-label', 'Close tutorial');
+    closeButton.textContent = '×';
 
-      <div class="tutorial-spotlight"></div>
-    `;
+    tutorialHeader.appendChild(tutorialTitle);
+    tutorialHeader.appendChild(closeButton);
+
+    const tutorialBody = document.createElement('div');
+    tutorialBody.className = 'tutorial-body';
+
+    const tutorialDescription = document.createElement('p');
+    tutorialDescription.id = 'tutorial-content';
+    tutorialDescription.className = 'tutorial-description';
+
+    tutorialBody.appendChild(tutorialDescription);
+
+    const tutorialFooter = document.createElement('div');
+    tutorialFooter.className = 'tutorial-footer';
+
+    const tutorialProgress = document.createElement('div');
+    tutorialProgress.className = 'tutorial-progress';
+
+    const progressBar = document.createElement('div');
+    progressBar.className = 'tutorial-progress-bar';
+
+    const progressFill = document.createElement('div');
+    progressFill.className = 'tutorial-progress-fill';
+
+    progressBar.appendChild(progressFill);
+
+    const stepCounter = document.createElement('span');
+    stepCounter.className = 'tutorial-step-counter';
+    stepCounter.setAttribute('aria-live', 'polite');
+
+    tutorialProgress.appendChild(progressBar);
+    tutorialProgress.appendChild(stepCounter);
+
+    const tutorialControls = document.createElement('div');
+    tutorialControls.className = 'tutorial-controls';
+
+    const skipButton = document.createElement('button');
+    skipButton.className = 'tutorial-btn tutorial-skip';
+    skipButton.textContent = 'Skip Tutorial';
+
+    const tutorialNav = document.createElement('div');
+    tutorialNav.className = 'tutorial-nav';
+
+    const prevButton = document.createElement('button');
+    prevButton.className = 'tutorial-btn tutorial-prev';
+    prevButton.disabled = true;
+    prevButton.textContent = 'Previous';
+
+    const nextButton = document.createElement('button');
+    nextButton.className = 'tutorial-btn tutorial-next tutorial-primary';
+    nextButton.textContent = 'Next';
+
+    tutorialNav.appendChild(prevButton);
+    tutorialNav.appendChild(nextButton);
+
+    tutorialControls.appendChild(skipButton);
+    tutorialControls.appendChild(tutorialNav);
+
+    tutorialFooter.appendChild(tutorialProgress);
+    tutorialFooter.appendChild(tutorialControls);
+
+    tutorialContent.appendChild(tutorialHeader);
+    tutorialContent.appendChild(tutorialBody);
+    tutorialContent.appendChild(tutorialFooter);
+
+    const spotlight = document.createElement('div');
+    spotlight.className = 'tutorial-spotlight';
+
+    this.overlay.appendChild(tutorialContent);
+    this.overlay.appendChild(spotlight);
 
     document.body.appendChild(this.overlay);
 
@@ -241,13 +296,13 @@ class TutorialManager {
     this.skipButton = this.overlay.querySelector('.tutorial-skip');
     this.nextButton = this.overlay.querySelector('.tutorial-next');
     this.prevButton = this.overlay.querySelector('.tutorial-prev');
-    const closeButton = this.overlay.querySelector('.tutorial-close');
+    const tutorialCloseButton = this.overlay.querySelector('.tutorial-close');
 
     // Add click handlers
     this.skipButton.addEventListener('click', this.skipTutorial);
     this.nextButton.addEventListener('click', this.nextStep);
     this.prevButton.addEventListener('click', this.prevStep);
-    closeButton.addEventListener('click', this.skipTutorial);
+    tutorialCloseButton.addEventListener('click', this.skipTutorial);
   }
 
   /**

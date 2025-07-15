@@ -23,3 +23,11 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.6.2", features = [] }
 tauri-plugin-log = "2"
+
+# Security-focused configurations
+[profile.release]
+# Enable additional security features in release builds
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = "s"

@@ -23,3 +23,23 @@ dist-ssr
 *.sw?
 
 .DS_Store
+
+# Security sensitive files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# Build artifacts
+docs/assets/
+src-tauri/target/
+src-tauri/gen/
+
+# Temporary files
+.tmp/
+temp/

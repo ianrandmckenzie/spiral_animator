@@ -1,9 +1,10 @@
 // Import tutorial system
 import TutorialManager from './tutorial.js';
+import { SecurityUtils, inputRateLimiter, fullscreenRateLimiter } from './security.js';
 
 // Polyfill for requestIdleCallback in environments where it's not available
 if (typeof requestIdleCallback === 'undefined') {
-  window.requestIdleCallback = function(callback, options) {
+  window.requestIdleCallback = function(callback) {
     const start = Date.now();
     return setTimeout(function() {
       callback({
@@ -132,32 +133,38 @@ function showFullscreenToast() {
 }
 
 async function enterFullscreen() {
+  // Rate limiting for fullscreen requests
+  if (!fullscreenRateLimiter()) {
+    console.warn('Fullscreen rate limit exceeded');
+    return;
+  }
+
   // Check if we're in Tauri environment
   if (window.__TAURI__) {
     try {
       // Use Tauri's window API
-      await window.__TAURI__.window.getCurrentWindow().setFullscreen(true)
+      await window.__TAURI__.window.getCurrentWindow().setFullscreen(true);
     } catch (error) {
-      console.error('Failed to enter fullscreen:', error)
+      console.error('Failed to enter fullscreen:', error);
     }
   } else {
     // Browser fullscreen API
-    const element = document.documentElement
+    const element = document.documentElement;
     try {
       if (element.requestFullscreen) {
-        await element.requestFullscreen()
+        await element.requestFullscreen();
       } else if (element.webkitRequestFullscreen) {
-        await element.webkitRequestFullscreen()
+        await element.webkitRequestFullscreen();
       } else if (element.msRequestFullscreen) {
-        await element.msRequestFullscreen()
+        await element.msRequestFullscreen();
       }
     } catch (error) {
-      console.error('Failed to enter fullscreen:', error)
+      console.error('Failed to enter fullscreen:', error);
     }
   }
 
   // Start cursor auto-hide timer when entering fullscreen
-  resetCursorTimer()
+  resetCursorTimer();
 }
 
 async function exitFullscreen() {
@@ -1678,36 +1685,39 @@ const spiralSlider = document.getElementById('spiralSlider')
 const spiralNumber = document.getElementById('spiralNumber')
 
 spiralSlider.addEventListener('input', (e) => {
-  spiralCoeff = parseFloat(e.target.value)
-  spiralNumber.value = spiralCoeff
-  savePreference('spiralCoeff', spiralCoeff)
+  if (!inputRateLimiter()) return; // Rate limiting
+
+  const value = SecurityUtils.validateNumber(parseFloat(e.target.value), 2, 200, spiralCoeff);
+  spiralCoeff = value;
+  spiralNumber.value = spiralCoeff;
+  savePreference('spiralCoeff', spiralCoeff);
 
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
-    computePoints()
+    computePoints();
   } else {
-    debouncedComputePoints()
+    debouncedComputePoints();
   }
-})
+});
 
 spiralNumber.addEventListener('input', (e) => {
-  const value = parseFloat(e.target.value)
-  if (value >= 0 && value <= 2000 && !isNaN(value)) {
-    spiralCoeff = value
-    // Only update slider if value is within slider range
-    if (value >= 2 && value <= 200) {
-      spiralSlider.value = spiralCoeff
-    }
-    savePreference('spiralCoeff', spiralCoeff)
+  if (!inputRateLimiter()) return; // Rate limiting
 
-    // Use instant computation if instant render is enabled, otherwise debounce
-    if (instantRender) {
-      computePoints()
-    } else {
-      debouncedComputePoints()
-    }
+  const value = SecurityUtils.validateNumber(parseFloat(e.target.value), 0, 2000, spiralCoeff);
+  spiralCoeff = value;
+  // Only update slider if value is within slider range
+  if (value >= 2 && value <= 200) {
+    spiralSlider.value = spiralCoeff;
   }
-})
+  savePreference('spiralCoeff', spiralCoeff);
+
+  // Use instant computation if instant render is enabled, otherwise debounce
+  if (instantRender) {
+    computePoints();
+  } else {
+    debouncedComputePoints();
+  }
+});
 
 // Max N slider functionality
 const maxNSlider = document.getElementById('maxNSlider')
@@ -2068,8 +2078,8 @@ function updateButtonText(button, newText) {
   // Remove tooltip elements temporarily
   tooltipElements.forEach(el => el.remove());
 
-  // Update the text content
-  button.textContent = newText;
+  // Update the text content with sanitization
+  button.textContent = SecurityUtils.sanitizeText(newText);
 
   // Re-add tooltip elements
   tooltipElements.forEach(el => button.appendChild(el));

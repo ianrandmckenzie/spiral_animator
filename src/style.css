@@ -10,7 +10,7 @@ canvas {
   z-index: -1;
 }
 
-body   {
+body.canvaspage  {
   margin: 0;
   overflow: hidden;
 }

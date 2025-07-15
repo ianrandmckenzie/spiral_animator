@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()" />
+
   <meta name="description" content="Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience." />
   <meta name="keywords" content="Sacks spiral, Ulam spiral, spirals, education, educational toy, prime numbers, mathematical visualization, number theory, interactive math, spiral patterns" />
   <title>Spiral Animator</title>
@@ -57,7 +64,7 @@
 
   <link href="./src/style.css" rel="stylesheet" />
 </head>
-<body class="bg-black text-[#00ff00]">
+<body class="bg-black text-[#00ff00] canvaspage">
   <!-- Skip link for keyboard navigation -->
   <a href="#spiralCanvas" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-green-500 focus:text-black focus:px-4 focus:py-2 focus:rounded">
     Skip to main content
@@ -255,7 +262,7 @@
 
       <div class="about-modal-body">
         <div class="about-modal-image">
-          <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo">
+          <img src="/icon.png" alt="Sacks Spiral Animator Logo" class="about-logo" loading="lazy">
         </div>
 
         <div class="about-modal-text text-gray-50">
