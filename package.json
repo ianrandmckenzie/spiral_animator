@@ -50,6 +50,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@tauri-apps/plugin-os": "^2.3.0",
     "opensheetmusicdisplay": "^1.9.0"
   }
 }
