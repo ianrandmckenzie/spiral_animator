@@ -679,6 +679,7 @@ class TutorialManager {
     // Remove previous highlight
     if (this.highlightElement) {
       this.highlightElement.classList.remove('tutorial-highlighted');
+      this.highlightElement.style.animation = ''; // Clear any animation
     }
 
     const spotlight = this.overlay.querySelector('.tutorial-spotlight');
@@ -739,6 +740,13 @@ class TutorialManager {
     if (!element) return;
 
     element.style.animation = 'tutorial-pulse 2s ease-in-out 3';
+
+    // Clear the animation after it completes (2s duration * 3 iterations = 6s)
+    setTimeout(() => {
+      if (element) {
+        element.style.animation = '';
+      }
+    }, 6100); // Add small buffer to ensure animation is complete
   }
 
   /**
@@ -901,12 +909,24 @@ class TutorialManager {
     // Remove highlights
     if (this.highlightElement) {
       this.highlightElement.classList.remove('tutorial-highlighted');
+      this.highlightElement.style.animation = ''; // Clear any animation
       this.highlightElement = null;
     }
 
-    // Remove all tutorial highlights
+    // Remove all tutorial highlights and clear animations
     document.querySelectorAll('.tutorial-highlighted').forEach(el => {
       el.classList.remove('tutorial-highlighted');
+      el.style.animation = ''; // Clear any animation
+    });
+
+    // Additional cleanup: remove any lingering tutorial-pulse animations from tutorial target elements
+    this.steps.forEach(step => {
+      if (step.target) {
+        const element = document.querySelector(step.target);
+        if (element && element.style.animation && element.style.animation.includes('tutorial-pulse')) {
+          element.style.animation = '';
+        }
+      }
     });
 
     // Remove overlay

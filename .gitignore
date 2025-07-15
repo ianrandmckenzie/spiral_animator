@@ -22,8 +22,6 @@ dist-ssr
 *.sln
 *.sw?
 
-.DS_Store
-
 # Security sensitive files
 .env
 .env.*
