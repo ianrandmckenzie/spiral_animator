@@ -36,7 +36,6 @@ secrets/
 .secrets/
 
 # Build artifacts
-docs/assets/
 src-tauri/target/
 src-tauri/gen/
 
