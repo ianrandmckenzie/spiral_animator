@@ -1,3 +1,6 @@
+// Import tutorial system
+import TutorialManager from './tutorial.js';
+
 // Polyfill for requestIdleCallback in environments where it's not available
 if (typeof requestIdleCallback === 'undefined') {
   window.requestIdleCallback = function(callback, options) {
@@ -40,6 +43,9 @@ let wasFullscreenBefore = false // Track if window was fullscreen before enterin
 let menuVisible = true // Track menu visibility state
 let interfaceVisibleInFullscreen = false // Track if interface is currently visible while in fullscreen
 let instantRender = true
+
+// Tutorial system
+let tutorialManager = null;
 
 // Spiral coefficient animation settings
 let animateSpiralCoeff = false
@@ -440,6 +446,7 @@ function initDB() {
 
   request.onsuccess = (event) => {
     db = event.target.result;
+    window.db = db; // Make globally accessible for tutorial system
     loadPreferences();
     // Load window state after a short delay to ensure Tauri APIs are ready
     if (window.__TAURI__) {
@@ -451,6 +458,7 @@ function initDB() {
 
   request.onupgradeneeded = (event) => {
     db = event.target.result;
+    window.db = db; // Make globally accessible for tutorial system
     const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
   };
 }
@@ -463,6 +471,10 @@ function savePreference(key, value) {
   const objectStore = transaction.objectStore(STORE_NAME);
   objectStore.put({ id: key, value: value });
 }
+
+// Make db and savePreference globally accessible for tutorial system
+window.db = null;
+window.savePreference = savePreference;
 
 // Save window state (Tauri only)
 async function saveWindowState() {
@@ -1978,6 +1990,14 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault()
     spiralAnimationToggle.click()
   }
+
+  // H key to show tutorial
+  if (e.key === 'h' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    if (tutorialManager) {
+      tutorialManager.start(true); // Manual trigger
+    }
+  }
 })
 
 // Add mouse move listener for cursor auto-hide functionality
@@ -2003,6 +2023,7 @@ window.addEventListener('load', () => {
     }, 500);
   }
 })
+
 
 // Add window state saving listeners for Tauri
 if (window.__TAURI__) {
@@ -2262,6 +2283,56 @@ function initTooltipToggle() {
   }
 }
 
+// Initialize tutorial system
+function initTutorial() {
+  try {
+    // Create tutorial manager instance
+    tutorialManager = new TutorialManager();
+
+    // Set up tutorial link in sidebar
+    const tutorialLink = document.getElementById('tutorialLink');
+    if (tutorialLink) {
+      tutorialLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (tutorialManager) {
+          tutorialManager.start(true); // Manual trigger
+        }
+      });
+    }
+
+
+
+    // Start tutorial automatically for first-time users
+    // Wait a bit to ensure all elements are ready
+    setTimeout(async () => {
+      if (tutorialManager) {
+        try {
+          const shouldShow = await tutorialManager.shouldShowTutorial();
+          if (shouldShow) {
+            // Additional delay to let the spiral render first
+            setTimeout(() => {
+              tutorialManager.start(false); // Automatic trigger
+            }, 1000);
+          }
+        } catch (error) {
+          console.warn('Failed to check tutorial status:', error);
+        }
+      }
+    }, 500);
+
+    // Add debug functions to window for testing
+    window.tutorialManager = tutorialManager;
+    window.startTutorial = () => tutorialManager?.start(true);
+    window.resetTutorial = () => tutorialManager?.reset();
+    window.forceResetTutorial = () => tutorialManager?.forceReset();
+    window.getTutorialStats = () => tutorialManager?.getStats();
+
+    console.log('Tutorial system initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize tutorial system:', error);
+  }
+}
+
 // About Modal functionality
 function initAboutModal() {
   const aboutLink = document.getElementById('aboutLink');
@@ -2334,4 +2405,5 @@ setTimeout(() => {
   initTooltips();
   initTooltipToggle();
   initAboutModal();
+  initTutorial();
 }, 100);
