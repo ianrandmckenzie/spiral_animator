@@ -1263,12 +1263,12 @@ mobileFullscreenExit.addEventListener('click', () => {
 // Add touch event handling for better mobile support
 mobileFullscreenExit.addEventListener('touchstart', (e) => {
   e.preventDefault()
-})
+}, { passive: false })
 
 mobileFullscreenExit.addEventListener('touchend', (e) => {
   e.preventDefault()
   mobileFullscreenExit.click()
-})
+}, { passive: false })
 
 // Listen for fullscreen changes
 document.addEventListener('fullscreenchange', updateFullscreenState)
@@ -2197,7 +2197,7 @@ function closeAllTooltips() {
 
 // Global tap handler to close all tooltips when tapping anywhere
 document.addEventListener('click', closeAllTooltips);
-document.addEventListener('touchend', closeAllTooltips);
+document.addEventListener('touchend', closeAllTooltips, { passive: true });
 
 function createTooltip(element, text) {
   if (!text) return;
@@ -2283,13 +2283,13 @@ function createTooltip(element, text) {
   icon.addEventListener('touchstart', (e) => {
     e.stopPropagation();
     e.preventDefault();
-  });
+  }, { passive: false });
 
   icon.addEventListener('touchend', (e) => {
     e.stopPropagation();
     e.preventDefault();
     showTooltip();
-  });
+  }, { passive: false });
 
   icon.addEventListener('click', (e) => {
     e.stopPropagation();

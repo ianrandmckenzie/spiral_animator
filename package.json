@@ -1,7 +1,8 @@
 {
   "name": "spiral_animator",
+  "description": "Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +17,28 @@
     "audit:fix": "npm audit fix",
     "security-check": "npm run lint:security && npm run audit"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ianrandmckenzie/spiral_animator.git"
+  },
+  "keywords": [
+    "Sacks spiral",
+    "Ulam spiral",
+    "spirals",
+    "education",
+    "educational toy",
+    "prime numbers",
+    "mathematical visualization",
+    "number theory",
+    "interactive math",
+    "spiral patterns"
+  ],
+  "author": "Ian Rand McKenzie",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ianrandmckenzie/spiral_animator/issues"
+  },
+  "homepage": "https://spiral.relentlesscurious.com",
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.10",
     "@tauri-apps/cli": "^2.6.2",
