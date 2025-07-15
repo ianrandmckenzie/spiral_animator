@@ -108,8 +108,11 @@ class TutorialManager {
    */
   async shouldShowTutorial() {
     const completed = await this.getTutorialPreference('completed');
+    const skipped = await this.getTutorialPreference('skipped');
     const manualTrigger = await this.getTutorialPreference('manualTrigger');
-    return !completed || manualTrigger;
+
+    // Don't show if completed or skipped, unless manually triggered
+    return (!completed && !skipped) || manualTrigger;
   }
 
   /**
@@ -175,9 +178,9 @@ class TutorialManager {
       this.isActive = true;
       this.currentStep = 0;
 
-      // Save that tutorial was triggered manually if applicable
+      // If triggered manually, reset the manual trigger flag after starting
       if (manual) {
-        this.saveTutorialPreference('manualTrigger', true);
+        this.saveTutorialPreference('manualTrigger', false);
       }
 
       this.createOverlay();
@@ -858,7 +861,14 @@ class TutorialManager {
    * Skip entire tutorial
    */
   skipTutorial() {
+    // Save skip information with timestamp and step where it was skipped
     this.saveTutorialPreference('skipped', Date.now());
+    this.saveTutorialPreference('skipped_step', this.currentStep);
+
+    // Ensure manual trigger flag is cleared so tutorial won't auto-show again
+    this.saveTutorialPreference('manualTrigger', false);
+
+    console.log('Tutorial skipped at step', this.currentStep);
     this.end();
   }
 
@@ -868,6 +878,11 @@ class TutorialManager {
   completeTutorial() {
     this.saveTutorialPreference('completed', Date.now());
     this.saveTutorialPreference('completed_step', this.steps.length);
+
+    // Clear manual trigger flag when tutorial is completed
+    this.saveTutorialPreference('manualTrigger', false);
+
+    console.log('Tutorial completed successfully');
     this.end();
   }
 
@@ -930,6 +945,35 @@ class TutorialManager {
    */
   async isCompleted() {
     return await this.getTutorialPreference('completed') !== null;
+  }
+
+  /**
+   * Check if the tutorial has been skipped previously
+   */
+  async hasBeenSkipped() {
+    const skipped = await this.getTutorialPreference('skipped');
+    return !!skipped;
+  }
+
+  /**
+   * Check if the tutorial has been completed previously
+   */
+  async hasBeenCompleted() {
+    const completed = await this.getTutorialPreference('completed');
+    return !!completed;
+  }
+
+  /**
+   * Reset tutorial state (for testing or allowing users to reset)
+   */
+  async resetTutorialState() {
+    this.saveTutorialPreference('skipped', null);
+    this.saveTutorialPreference('completed', null);
+    this.saveTutorialPreference('manualTrigger', null);
+    this.saveTutorialPreference('started', null);
+    this.saveTutorialPreference('skipped_step', null);
+    this.saveTutorialPreference('completed_step', null);
+    console.log('Tutorial state has been reset');
   }
 
   /**
@@ -996,6 +1040,24 @@ class TutorialManager {
     }
 
     return stats;
+  }
+
+  /**
+   * Manually trigger the tutorial (for H key or tutorial link clicks)
+   */
+  async triggerManually() {
+    try {
+      // Set the manual trigger flag first
+      this.saveTutorialPreference('manualTrigger', true);
+
+      // Small delay to ensure the preference is saved
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Start the tutorial
+      await this.start(true);
+    } catch (error) {
+      console.error('Failed to manually trigger tutorial:', error);
+    }
   }
 }
 

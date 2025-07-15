@@ -2,5 +2,4 @@ User-agent: *
 Allow: /
 Crawl-delay: 1
 
-# Sitemap location (add if you create one)
-# Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://spiral.relentlesscurious.com/sitemap.xml

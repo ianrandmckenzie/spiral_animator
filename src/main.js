@@ -258,36 +258,6 @@ async function exitFullscreen() {
   }
 }
 
-async function toggleMenuVisibility() {
-  // Check if we're in Tauri environment
-  if (window.__TAURI__) {
-    try {
-      menuVisible = !menuVisible
-      console.log('Menu visibility toggled:', menuVisible ? 'visible' : 'hidden')
-
-      // Show a toast to indicate menu state change
-      const toast = document.getElementById('fullscreenToast')
-      toast.textContent = getMobileMessage(menuVisible ? 'Menu restored (ESC to exit fullscreen)' : 'Menu hidden (ESC to restore menu)')
-      toast.classList.add('show')
-
-      // Clear existing timeout
-      if (toastTimeout) {
-        clearTimeout(toastTimeout)
-      }
-
-      // Hide toast after 3 seconds
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove('show')
-        // Restore original toast text
-        toast.textContent = getMobileMessage('Press ESC to exit fullscreen')
-      }, 3000)
-
-    } catch (error) {
-      console.error('Failed to toggle menu visibility:', error)
-    }
-  }
-}
-
 async function showInterfaceInFullscreen() {
   // When in fullscreen mode but wanting to show interface (for users who were already fullscreen)
   console.log('Showing interface in fullscreen mode')
@@ -1207,13 +1177,6 @@ function drawFrame() {
   requestAnimationFrame(drawFrame)
 }
 
-function randomizeRGB() {
-  return '0,0,0'
-    .split(',')
-    .map(() => Math.floor(Math.random() * 256))
-    .join(',');
-}
-
 // scroll-to-zoom with debouncing
 function scrollClamp(v,min,max){ return Math.max(min, Math.min(max, v)) }
 const debouncedSaveScale = debounce((scale) => savePreference('scale', scale), 200);
@@ -1655,11 +1618,6 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-// Map range function
-function mapRange(value, inMin, inMax, outMin, outMax) {
-  return outMin + (outMax - outMin) * clamp((value - inMin) / (inMax - inMin), 0, 1);
-}
-
 // Update spiral coefficient bounds based on UI inputs
 function updateSpiralCoeffBounds() {
   const minInput = document.getElementById('spiralAnimationMinNumber');
@@ -2098,10 +2056,53 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'h' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault()
     if (tutorialManager) {
-      tutorialManager.start(true); // Manual trigger
+      tutorialManager.triggerManually(); // Manual trigger with preference handling
     }
   }
 })
+
+// Make tutorial state debugging methods available globally for development
+if (typeof window !== 'undefined') {
+  window.debugTutorial = {
+    async checkStatus() {
+      if (!tutorialManager) {
+        console.log('Tutorial manager not available');
+        return;
+      }
+
+      const skipped = await tutorialManager.hasBeenSkipped();
+      const completed = await tutorialManager.hasBeenCompleted();
+      const started = await tutorialManager.getTutorialPreference('started');
+      const manualTrigger = await tutorialManager.getTutorialPreference('manualTrigger');
+
+      console.log('Tutorial Status:', {
+        skipped,
+        completed,
+        started: started ? new Date(started) : null,
+        manualTrigger,
+        isCurrentlyActive: tutorialManager.isActive
+      });
+    },
+
+    async reset() {
+      if (!tutorialManager) {
+        console.log('Tutorial manager not available');
+        return;
+      }
+      await tutorialManager.resetTutorialState();
+    },
+
+    async trigger() {
+      if (!tutorialManager) {
+        console.log('Tutorial manager not available');
+        return;
+      }
+      await tutorialManager.triggerManually();
+    }
+  };
+
+  console.log('Tutorial debugging available: debugTutorial.checkStatus(), debugTutorial.reset(), debugTutorial.trigger()');
+}
 
 // Add mouse move listener for cursor auto-hide functionality
 document.addEventListener('mousemove', resetCursorTimer)
@@ -2398,7 +2399,7 @@ function initTutorial() {
       tutorialLink.addEventListener('click', (e) => {
         e.preventDefault();
         if (tutorialManager) {
-          tutorialManager.start(true); // Manual trigger
+          tutorialManager.triggerManually(); // Manual trigger with preference handling
         }
       });
     }
