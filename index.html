@@ -101,9 +101,11 @@
         <div class="control-group" data-tooltip="Controls the tightness of the spiral - higher values create tighter coils">
           <label for="spiralSlider">Spiral Coefficient</label>
           <input type="range" id="spiralSlider" min="2" max="200" value="2" step="0.1"
-                 aria-describedby="spiralNumber">
+                 aria-describedby="spiralNumber spiralDescription">
           <input type="number" id="spiralNumber" min="0" max="2000" value="2" step="0.1"
-                 aria-label="Spiral coefficient numeric input">
+                 aria-label="Spiral coefficient numeric input"
+                 aria-describedby="spiralDescription">
+          <div id="spiralDescription" class="sr-only">Controls how tightly the spiral winds. Current value updates the visualization in real-time.</div>
 
           <!-- Spiral Animation Controls (initially hidden) -->
           <div id="spiralAnimationControls" class="spiral-animation-controls" style="display: none;">
@@ -144,9 +146,11 @@
         <div class="control-group" data-tooltip="Total number of points to display - more points show greater detail but may impact performance">
           <label for="maxNSlider">Number of Dots on Screen</label>
           <input type="range" id="maxNSlider" min="500" max="190000" value="5000" step="1000"
-                 aria-describedby="maxNNumber">
+                 aria-describedby="maxNNumber maxNDescription">
           <input type="number" id="maxNNumber" min="1" max="1900000" value="5000" step="1000"
-                 aria-label="Maximum point count numeric input">
+                 aria-label="Maximum point count numeric input"
+                 aria-describedby="maxNDescription">
+          <div id="maxNDescription" class="sr-only">Controls the total number of points displayed in the spiral. Higher values show more detail but may impact performance.</div>
         </div>
 
         <div class="control-group" data-tooltip="How fast the spiral rotates - higher values create faster rotation">
@@ -179,20 +183,24 @@
       <h1 class="sr-only">Interactive Number Spiral Visualizer</h1>
 
       <details class="mb-4 keyboard-shortcuts">
-        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2">
+        <summary class="text-sm text-[#00cc00] cursor-pointer hover:text-[#00ff00] mb-2"
+                 aria-expanded="false"
+                 aria-controls="keyboardShortcutsList">
           Keyboard Shortcuts
         </summary>
-        <div class="text-xs text-[#00aa00] space-y-1">
-          <div><kbd class="bg-gray-700 px-1 rounded">ESC</kbd> Exit fullscreen / Close sidebar</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">F</kbd> Toggle fullscreen</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">S</kbd> Toggle sidebar</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">P</kbd> Toggle prime highlighting</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">A</kbd> Toggle animation</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
-          <div><kbd class="bg-gray-700 px-1 rounded">H</kbd> Show tutorial</div>
+        <div id="keyboardShortcutsList" class="text-xs text-[#00aa00] space-y-1" role="list">
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">ESC</kbd> Exit fullscreen / Close sidebar</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">F</kbd> Toggle fullscreen</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">S</kbd> Toggle sidebar</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">P</kbd> Toggle prime highlighting</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">A</kbd> Toggle animation</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">R</kbd> Toggle rotation</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">C</kbd> Toggle circles/squares</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">I</kbd> Toggle instant render</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">M</kbd> Toggle spiral coefficient animation</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">H</kbd> Show tutorial</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">↑/↓</kbd> Adjust spiral coefficient (when canvas focused)</div>
+          <div role="listitem"><kbd class="bg-gray-700 px-1 rounded">Enter/Space</kbd> Get current status (when canvas focused)</div>
         </div>
       </details>
 
@@ -235,9 +243,11 @@
 
       <div class="control-group mt-4">
         <label class="flex items-center text-sm">
-          <input type="checkbox" id="disableTooltips" class="mr-2 accent-green-500">
+          <input type="checkbox" id="disableTooltips" class="mr-2 accent-green-500"
+                 aria-describedby="tooltipToggleDescription">
           Disable Tooltips
         </label>
+        <div id="tooltipToggleDescription" class="sr-only">Toggle tooltips that appear when hovering over controls</div>
       </div>
 
       <p class="text-sm text-[#00cc00]">This project was inspired by <a class="underline" href="https://numberspiral.com/">NumberSpiral.com</a> by Robert Sacks</p>
@@ -254,9 +264,9 @@
   </div>
 
   <!-- About Modal -->
-  <div id="aboutModal" class="about-modal" role="dialog" aria-labelledby="aboutTitle" aria-hidden="true">
+  <div id="aboutModal" class="about-modal" role="dialog" aria-labelledby="aboutTitle" aria-hidden="true" aria-modal="true">
     <div class="about-modal-content">
-      <button class="about-modal-close" id="aboutModalClose" aria-label="Close about modal">×</button>
+      <button class="about-modal-close" id="aboutModalClose" aria-label="Close about modal" tabindex="0">×</button>
 
       <h2 id="aboutTitle" class="about-modal-title">About Sacks Spiral Animator</h2>
 
@@ -297,14 +307,27 @@
           title="Exit Fullscreen"
           aria-label="Exit fullscreen mode">✕</button>
 
-  <div class="fullscreen-toast" id="fullscreenToast" role="alert" aria-live="polite">
+  <div class="fullscreen-toast" id="fullscreenToast" role="alert" aria-live="polite" aria-atomic="true">
     Press ESC to exit fullscreen
   </div>
 
+  <!-- Status announcements for screen readers -->
+  <div id="statusAnnouncements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Error announcements for screen readers -->
+  <div id="errorAnnouncements" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
   <canvas id="spiralCanvas" class="w-full h-full"
           role="img"
-          aria-label="Interactive Sacks spiral visualization showing numbered points with prime numbers highlighted">
+          aria-label="Interactive Sacks spiral visualization showing numbered points with prime numbers highlighted"
+          aria-describedby="canvasDescription"
+          tabindex="0">
   </canvas>
+
+  <!-- Enhanced description for screen readers -->
+  <div id="canvasDescription" class="sr-only">
+    Mathematical visualization displaying numbers arranged in a spiral pattern. Prime numbers are highlighted with increased brightness and size. Use keyboard shortcuts or sidebar controls to adjust spiral parameters, rotation, and animation settings. Current spiral coefficient: <span id="currentSpiralValue">2</span>, showing <span id="currentPointCount">5000</span> points.
+  </div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

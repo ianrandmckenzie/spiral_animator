@@ -73,7 +73,7 @@ const clusters = []
 
 // Cursor auto-hide functionality
 function hideCursor() {
-  if (isFullscreen && !cursorHidden) {
+  if (!cursorHidden) {
     document.body.style.cursor = 'none'
     cursorHidden = true
   }
@@ -81,25 +81,84 @@ function hideCursor() {
 
 function showCursor() {
   if (cursorHidden) {
-    document.body.style.cursor = 'auto'
+    document.body.style.cursor = 'default'
     cursorHidden = false
   }
 }
 
 function resetCursorTimer() {
-  // Clear existing timer
+  // Clear existing timeout
   if (cursorTimeout) {
     clearTimeout(cursorTimeout)
   }
 
-  // Only start timer if in fullscreen
-  if (isFullscreen) {
-    // Show cursor immediately
-    showCursor()
+  // Show cursor and set new timeout
+  showCursor()
 
-    // Set new timer to hide cursor after delay
+  // Only auto-hide cursor in fullscreen mode
+  if (isFullscreen) {
     cursorTimeout = setTimeout(hideCursor, CURSOR_HIDE_DELAY)
   }
+}
+
+// Accessibility helper functions
+function announceToScreenReader(message, isError = false) {
+  const announcement = document.getElementById(isError ? 'errorAnnouncements' : 'statusAnnouncements');
+  if (announcement) {
+    announcement.textContent = message;
+    // Clear after a delay to allow re-announcing the same message if needed
+    setTimeout(() => {
+      announcement.textContent = '';
+    }, 1000);
+  }
+}
+
+function updateCanvasDescription() {
+  const spiralValue = document.getElementById('currentSpiralValue');
+  const pointCount = document.getElementById('currentPointCount');
+  if (spiralValue) spiralValue.textContent = spiralCoeff.toFixed(1);
+  if (pointCount) pointCount.textContent = maxN.toLocaleString();
+}
+
+// Enhanced keyboard navigation for canvas
+function addCanvasKeyboardSupport() {
+  const canvas = document.getElementById('spiralCanvas');
+  if (!canvas) return;
+
+  canvas.addEventListener('keydown', (e) => {
+    // Don't handle if user is typing in input fields
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    switch(e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        const currentSpiral = parseFloat(document.getElementById('spiralNumber').value);
+        const newSpiral = Math.min(2000, currentSpiral + 0.5);
+        document.getElementById('spiralSlider').value = newSpiral;
+        document.getElementById('spiralNumber').value = newSpiral;
+        spiralCoeff = newSpiral;
+        computePoints();
+        announceToScreenReader(`Spiral coefficient increased to ${newSpiral.toFixed(1)}`);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        const currentSpiralDown = parseFloat(document.getElementById('spiralNumber').value);
+        const newSpiralDown = Math.max(0.1, currentSpiralDown - 0.5);
+        document.getElementById('spiralSlider').value = newSpiralDown;
+        document.getElementById('spiralNumber').value = newSpiralDown;
+        spiralCoeff = newSpiralDown;
+        computePoints();
+        announceToScreenReader(`Spiral coefficient decreased to ${newSpiralDown.toFixed(1)}`);
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        announceToScreenReader(`Current spiral shows ${maxN} points with coefficient ${spiralCoeff.toFixed(1)}. Prime numbers are ${showPrimes ? 'highlighted' : 'not highlighted'}. Rotation is ${showRotation ? 'active' : 'inactive'}.`);
+        break;
+    }
+  });
 }
 
 // Fullscreen functionality
@@ -989,6 +1048,9 @@ function computePoints() {
     // Schedule the first chunk
     window.currentComputationId = requestIdleCallback(computeChunk, { timeout: 50 });
   }
+
+  // Update canvas description for screen readers
+  updateCanvasDescription()
 }
 
 function initClusters() {
@@ -1312,6 +1374,9 @@ primeToggle.addEventListener('click', () => {
   const newText = showPrimes ? 'Defocus Prime Numbers' : 'Focus Prime Numbers'
   updateButtonText(primeToggle, newText)
 
+  // Announce change to screen readers
+  announceToScreenReader(`Prime number highlighting ${showPrimes ? 'enabled' : 'disabled'}`)
+
   savePreference('showPrimes', showPrimes)
 })
 
@@ -1339,6 +1404,9 @@ rotationToggle.addEventListener('click', () => {
   // Preserve tooltip elements when updating text
   const newText = showRotation ? 'Stop Rotation' : 'Start Rotation'
   updateButtonText(rotationToggle, newText)
+
+  // Announce change to screen readers
+  announceToScreenReader(`Spiral rotation ${showRotation ? 'started' : 'stopped'}`)
 
   savePreference('showRotation', showRotation)
   // Recompute points when rotation state changes to adjust clipping bounds
@@ -1684,6 +1752,11 @@ const debouncedInitClusters = debounce(initClusters, 100);
 const spiralSlider = document.getElementById('spiralSlider')
 const spiralNumber = document.getElementById('spiralNumber')
 
+// Debounced announcements for slider changes
+const debouncedAnnounceSpiral = debounce((value) => {
+  announceToScreenReader(`Spiral coefficient: ${value}`)
+}, 500)
+
 spiralSlider.addEventListener('input', (e) => {
   if (!inputRateLimiter()) return; // Rate limiting
 
@@ -1691,6 +1764,9 @@ spiralSlider.addEventListener('input', (e) => {
   spiralCoeff = value;
   spiralNumber.value = spiralCoeff;
   savePreference('spiralCoeff', spiralCoeff);
+
+  // Announce value change
+  debouncedAnnounceSpiral(value.toFixed(1))
 
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
@@ -1704,6 +1780,11 @@ spiralNumber.addEventListener('input', (e) => {
   if (!inputRateLimiter()) return; // Rate limiting
 
   const value = SecurityUtils.validateNumber(parseFloat(e.target.value), 0, 2000, spiralCoeff);
+  if (isNaN(value) || value < 0 || value > 2000) {
+    announceToScreenReader('Invalid spiral coefficient value. Please enter a number between 0 and 2000.', true)
+    return
+  }
+
   spiralCoeff = value;
   // Only update slider if value is within slider range
   if (value >= 2 && value <= 200) {
@@ -1723,10 +1804,19 @@ spiralNumber.addEventListener('input', (e) => {
 const maxNSlider = document.getElementById('maxNSlider')
 const maxNNumber = document.getElementById('maxNNumber')
 
+// Debounced announcements for max N changes
+const debouncedAnnounceMaxN = debounce((value) => {
+  const formattedValue = value.toLocaleString()
+  announceToScreenReader(`Point count: ${formattedValue}`)
+}, 500)
+
 maxNSlider.addEventListener('input', (e) => {
   maxN = parseInt(e.target.value)
   maxNNumber.value = maxN
   savePreference('maxN', maxN)
+
+  // Announce value change
+  debouncedAnnounceMaxN(maxN)
 
   // Use instant computation if instant render is enabled, otherwise debounce
   if (instantRender) {
@@ -1741,12 +1831,13 @@ maxNNumber.addEventListener('input', (e) => {
   if (value >= 1 && value <= 1900000 && !isNaN(value)) {
     maxN = value
     // Only update slider if value is within slider range
-    if (value >= 20000 && value <= 190000) {
+    if (value >= 500 && value <= 190000) {
       maxNSlider.value = maxN
     }
     // Add performance warning for very large values
     if (value > 500000) {
       console.warn(`Warning: Using ${value} points may impact performance`)
+      announceToScreenReader(`Warning: ${value.toLocaleString()} points may impact performance`, true)
     }
     savePreference('maxN', maxN)
 
@@ -1756,6 +1847,8 @@ maxNNumber.addEventListener('input', (e) => {
     } else {
       debouncedComputePoints()
     }
+  } else {
+    announceToScreenReader('Invalid point count. Please enter a number between 1 and 1,900,000.', true)
   }
 })
 
@@ -2353,6 +2446,34 @@ function initAboutModal() {
     return;
   }
 
+  // Get all focusable elements in the modal
+  function getFocusableElements() {
+    return aboutModal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+  }
+
+  // Trap focus within modal
+  function trapFocus(e) {
+    const focusableElements = getFocusableElements();
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
+  }
+
   // Open modal
   function openModal() {
     aboutModal.classList.add('show');
@@ -2361,6 +2482,10 @@ function initAboutModal() {
     aboutModalClose.focus();
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
+    // Add focus trap
+    document.addEventListener('keydown', trapFocus);
+    // Announce to screen readers
+    announceToScreenReader('About modal opened');
   }
 
   // Close modal
@@ -2371,6 +2496,10 @@ function initAboutModal() {
     document.body.style.overflow = 'hidden'; // Keep hidden since this is the main app style
     // Return focus to the about link
     aboutLink.focus();
+    // Remove focus trap
+    document.removeEventListener('keydown', trapFocus);
+    // Announce to screen readers
+    announceToScreenReader('About modal closed');
   }
 
   // Event listeners
@@ -2416,4 +2545,5 @@ setTimeout(() => {
   initTooltipToggle();
   initAboutModal();
   initTutorial();
+  addCanvasKeyboardSupport(); // Initialize enhanced canvas keyboard navigation
 }, 100);

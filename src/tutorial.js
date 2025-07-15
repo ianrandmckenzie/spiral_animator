@@ -199,6 +199,10 @@ class TutorialManager {
     this.overlay = document.createElement('div');
     this.overlay.className = 'tutorial-overlay';
     this.overlay.setAttribute('role', 'dialog');
+    this.overlay.setAttribute('aria-modal', 'true');
+    this.overlay.setAttribute('aria-labelledby', 'tutorial-title');
+    this.overlay.setAttribute('aria-describedby', 'tutorial-description');
+    this.overlay.setAttribute('role', 'dialog');
     this.overlay.setAttribute('aria-labelledby', 'tutorial-title');
     this.overlay.setAttribute('aria-describedby', 'tutorial-content');
     this.overlay.setAttribute('aria-modal', 'true');
@@ -258,6 +262,7 @@ class TutorialManager {
     const skipButton = document.createElement('button');
     skipButton.className = 'tutorial-btn tutorial-skip';
     skipButton.textContent = 'Skip Tutorial';
+    skipButton.setAttribute('aria-label', 'Skip tutorial and close');
 
     const tutorialNav = document.createElement('div');
     tutorialNav.className = 'tutorial-nav';
@@ -266,10 +271,12 @@ class TutorialManager {
     prevButton.className = 'tutorial-btn tutorial-prev';
     prevButton.disabled = true;
     prevButton.textContent = 'Previous';
+    prevButton.setAttribute('aria-label', 'Go to previous tutorial step');
 
     const nextButton = document.createElement('button');
     nextButton.className = 'tutorial-btn tutorial-next tutorial-primary';
     nextButton.textContent = 'Next';
+    nextButton.setAttribute('aria-label', 'Go to next tutorial step');
 
     tutorialNav.appendChild(prevButton);
     tutorialNav.appendChild(nextButton);
@@ -314,6 +321,44 @@ class TutorialManager {
 
     // Override keyboard shortcuts that could interfere with tutorial
     this.enableSidebarProtection();
+
+    // Add focus trap
+    this.setupFocusTrap();
+  }
+
+  /**
+   * Setup focus trap for tutorial modal
+   */
+  setupFocusTrap() {
+    const focusableElements = this.overlay.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    this.trapFocus = (e) => {
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', this.trapFocus);
+
+    // Focus the first focusable element
+    setTimeout(() => firstElement.focus(), 100);
   }
 
   /**
@@ -327,6 +372,12 @@ class TutorialManager {
 
     // Restore normal keyboard behavior
     this.disableSidebarProtection();
+
+    // Remove focus trap
+    if (this.trapFocus) {
+      document.removeEventListener('keydown', this.trapFocus);
+      this.trapFocus = null;
+    }
   }
 
   /**
