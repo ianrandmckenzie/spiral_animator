@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "spiral_animator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "identifier": "com.relentlesscurious.spiral",
   "build": {
     "frontendDist": "../docs",
@@ -43,6 +43,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "publisher": "Ian Rand McKenzie",
+    "copyright": "Copyright © 2025 Ian Rand McKenzie",
+    "category": "Utility",
+    "shortDescription": "Interactive spiral visualization tool",
+    "longDescription": "Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters.",
     "iOS": {
       "minimumSystemVersion": "13.0",
       "developmentTeam": "YOUR_APPLE_TEAM_ID"

@@ -2,7 +2,7 @@
   "name": "spiral_animator",
   "description": "Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters. Explore mathematical patterns in an immersive fullscreen experience.",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
