@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "spiral_animator",
   "version": "1.0.0",
-  "identifier": "com.spiral-animator.app",
+  "identifier": "com.relentlesscurious.spiral",
   "build": {
     "frontendDist": "../docs",
     "devUrl": "http://localhost:5173",
