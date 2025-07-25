@@ -48,6 +48,14 @@
     "category": "Utility",
     "shortDescription": "Interactive spiral visualization tool",
     "longDescription": "Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters.",
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "signingIdentity": "-",
+      "providerShortName": null,
+      "entitlements": null
+    },
     "iOS": {
       "minimumSystemVersion": "13.0",
       "developmentTeam": "YOUR_APPLE_TEAM_ID"
