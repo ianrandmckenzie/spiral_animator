@@ -1,0 +1,281 @@
+name: Cross-Platform Release (GitHub)
+run-name: Cross-platform release triggered by ${{ github.actor }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: get version
+        run: echo "PACKAGE_VERSION=$(node -pe "require('./package.json').version")" >> $GITHUB_ENV
+      - name: create release
+        id: create-release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${process.env.PACKAGE_VERSION}`,
+              name: `Spiral Animator v${process.env.PACKAGE_VERSION}`,
+              body: `# Spiral Animator v${process.env.PACKAGE_VERSION}
+
+              ## Downloads
+
+              ### Desktop Applications
+              - **Windows**: \`spiral_animator_${process.env.PACKAGE_VERSION}_x64_en-US.msi\`
+              - **macOS (Apple Silicon)**: \`spiral_animator_${process.env.PACKAGE_VERSION}_aarch64.dmg\`
+              - **macOS (Intel)**: \`spiral_animator_${process.env.PACKAGE_VERSION}_x64.dmg\`
+              - **Linux**: \`spiral_animator_${process.env.PACKAGE_VERSION}_amd64.deb\` or \`spiral_animator_${process.env.PACKAGE_VERSION}_amd64.AppImage\`
+
+              ### Mobile Applications
+              - **Android**: \`spiral_animator_${process.env.PACKAGE_VERSION}_universal.apk\`
+              - **iOS**: Available through TestFlight or App Store
+
+              ### Web Application
+              - **Web**: [https://spiral.relentlesscurious.com](https://spiral.relentlesscurious.com)
+
+              ## Features
+              Interactive spiral visualization with prime number highlighting, animated coefficients, rotation effects, and customizable parameters.
+              `,
+              draft: true,
+              prerelease: false
+            })
+            return data.id
+
+  build_desktop:
+    needs: create-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            ext: 'dmg'
+            arch: 'aarch64'
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            ext: 'dmg'
+            arch: 'x64'
+          - platform: 'ubuntu-22.04'
+            args: ''
+            ext: 'deb'
+            arch: 'amd64'
+          - platform: 'windows-latest'
+            args: ''
+            ext: 'msi'
+            arch: 'x64'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+
+      - name: install Rust stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+          target: ${{ matrix.platform == 'macos-latest' && (contains(matrix.args, 'aarch64') && 'aarch64-apple-darwin' || 'x86_64-apple-darwin') || '' }}
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: install frontend dependencies
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+
+  build_android:
+    needs: create-release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: 'npm'
+
+      - name: Install stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+          link-to-sdk: true
+
+      - name: install Android targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize Android if needed
+        run: |
+          if [ ! -d "src-tauri/gen/android" ]; then
+            npm run android:init
+          fi
+
+      - name: setup Android signing
+        if: ${{ secrets.ANDROID_KEY_BASE64 != '' }}
+        working-directory: src-tauri/gen/android
+        run: |
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
+          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+          base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
+          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
+
+      - name: build Tauri app for Android
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          npm run android:build:release
+
+      - name: Upload Android APK
+        if: always()
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+          asset_name: spiral_animator_${{ github.ref_name }}_universal.apk
+          asset_content_type: application/vnd.android.package-archive
+
+  build_ios:
+    needs: create-release
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    if: ${{ secrets.APPLE_API_KEY != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: 'npm'
+
+      - name: Install stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: install iOS target
+        run: rustup target add aarch64-apple-ios
+
+      - name: setup xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Initialize iOS if needed
+        run: |
+          if [ ! -d "src-tauri/gen/ios" ]; then
+            npm run ios:init
+          fi
+
+      - name: setup Apple API key
+        run: |
+          APPLE_API_KEY_PATH="$RUNNER_TEMP/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8"
+          echo "${{ secrets.APPLE_API_KEY }}" > $APPLE_API_KEY_PATH
+          echo "APPLE_API_KEY_PATH=$APPLE_API_KEY_PATH" >> $GITHUB_ENV
+          echo "API_PRIVATE_KEYS_DIR=$RUNNER_TEMP" >> $GITHUB_ENV
+
+      - name: build Tauri app for iOS
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
+        run: |
+          npm run ios:build:release
+
+      # Note: iOS builds create .ipa files that need to be uploaded to TestFlight/App Store
+      # They cannot be directly distributed as release assets
+
+  publish_release:
+    needs: [build_desktop, build_android, build_ios]
+    if: always() && needs.create-release.result == 'success'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: publish release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ needs.create-release.outputs.release_id }},
+              draft: false
+            })
